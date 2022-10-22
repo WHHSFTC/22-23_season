@@ -20,8 +20,8 @@ class Luke(val gamepad: Gamepad, val bot: October) : Command {
         val y = -pad.left_stick_x.toDouble()
         val omega = -pad.right_stick_x.toDouble()
 
-        val turtle = pad.left_trigger > 0.5 || pad.right_trigger > 0.5
-        val scalar = if (turtle) 0.25 else 1.0
+        val turtle = pad.left_trigger > 0.5 || pad.right_trigger > 0.5 || bot.manip.lift.encoder.position > 1000
+        val scalar = if (turtle) 0.5 else 1.0
 
         val pow = Pose2d(x, y, omega) * scalar
 

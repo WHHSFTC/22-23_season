@@ -40,7 +40,8 @@ class Lift(val log: Logger, config: Configuration) : Subsystem {
         data class Manual(val velocity: Double): State()
     }
 
-    enum class Height(val pos: Int) {
+    @Config
+    enum class Height(@JvmField var pos: Int) {
         INTAKE(0), MIN_CLEAR(2300),
 
         TERMINAL(100), GROUND(100),
@@ -83,14 +84,14 @@ class Lift(val log: Logger, config: Configuration) : Subsystem {
                 }
             }
 
-            is State.RunTo -> {
-                if ((encoder.position - state.pos).absoluteValue < TOLERANCE) {
-                    log.addMessage("reached ${state.pos}", 10.seconds)
-                    State.IDLE
-                } else {
-                    state
-                }
-            }
+//            is State.RunTo -> {
+//                if ((encoder.position - state.pos).absoluteValue < TOLERANCE) {
+//                    log.addMessage("reached ${state.pos}", 10.seconds)
+//                    State.IDLE
+//                } else {
+//                    state
+//                }
+//            }
 
             else -> state
         }
@@ -150,6 +151,7 @@ class Lift(val log: Logger, config: Configuration) : Subsystem {
         )
         @JvmField var LIFT_KV = 1.0
         @JvmField var LIFT_KA = 0.0
+
         @JvmField var LIFT_KS = 0.0
         @JvmField var LIFT_KB = 0.0
         @JvmField var LIFT_KH = 0.0
