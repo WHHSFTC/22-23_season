@@ -45,7 +45,7 @@ class Lift(val log: Logger, config: Configuration) : Subsystem {
         INTAKE(0), MIN_CLEAR(2300),
 
         TERMINAL(100), GROUND(100),
-        LOW(1300), MID(2300), HIGH(3000);
+        LOW(1300), MID(2400), HIGH(3500);
     }
 
     val isBusy: Boolean
