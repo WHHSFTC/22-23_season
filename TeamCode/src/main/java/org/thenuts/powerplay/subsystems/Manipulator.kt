@@ -5,7 +5,6 @@ import org.thenuts.switchboard.core.Logger
 import org.thenuts.switchboard.hardware.Configuration
 import org.thenuts.switchboard.hardware.HardwareOutput
 import kotlin.math.max
-import kotlin.reflect.KProperty
 import kotlin.time.Duration.Companion.seconds
 
 class Manipulator(val log: Logger, config: Configuration) : Subsystem {
@@ -14,11 +13,11 @@ class Manipulator(val log: Logger, config: Configuration) : Subsystem {
     }
 
     enum class ExtensionState(override val pos: Double) : StatefulServo.ServoPosition {
-        BACK(0.01), FRONT(0.53)
+        OUTPUT(0.01), INTAKE(0.53)
     }
 
     enum class WristState(override val pos: Double) : StatefulServo.ServoPosition {
-        BACK(0.85), FRONT(0.19)
+        OUTPUT(0.02), INTAKE(0.68)
     }
 
     enum class ClawState(override val pos: Double) : StatefulServo.ServoPosition {
@@ -31,15 +30,15 @@ class Manipulator(val log: Logger, config: Configuration) : Subsystem {
         @DiffField val wrist: WristState,
         @DiffField val claw: ClawState,
     ) {
-        FRONT_INTAKE(LiftState.INTAKE, ExtensionState.FRONT, WristState.FRONT, ClawState.OPEN),
-        FRONT_CLOSED(LiftState.INTAKE, ExtensionState.FRONT, WristState.FRONT, ClawState.CLOSED),
+        FRONT_INTAKE(LiftState.INTAKE, ExtensionState.INTAKE, WristState.INTAKE, ClawState.OPEN),
+        FRONT_CLOSED(LiftState.INTAKE, ExtensionState.INTAKE, WristState.INTAKE, ClawState.CLOSED),
 
-        FRONT_CLEAR(LiftState.CLEAR, ExtensionState.FRONT, WristState.FRONT, ClawState.CLOSED),
-        FRONT_TWIST(LiftState.CLEAR, ExtensionState.FRONT, WristState.BACK, ClawState.CLOSED),
-        BACK_CLEAR(LiftState.CLEAR, ExtensionState.BACK, WristState.BACK, ClawState.CLOSED),
+        FRONT_CLEAR(LiftState.CLEAR, ExtensionState.INTAKE, WristState.INTAKE, ClawState.CLOSED),
+        FRONT_TWIST(LiftState.CLEAR, ExtensionState.INTAKE, WristState.OUTPUT, ClawState.CLOSED),
+        BACK_CLEAR(LiftState.CLEAR, ExtensionState.OUTPUT, WristState.OUTPUT, ClawState.CLOSED),
 
-        BACK_OUTPUT(LiftState.OUTPUT, ExtensionState.BACK, WristState.BACK, ClawState.CLOSED),
-        BACK_DROP(LiftState.OUTPUT, ExtensionState.BACK, WristState.BACK, ClawState.WIDE);
+        BACK_OUTPUT(LiftState.OUTPUT, ExtensionState.OUTPUT, WristState.OUTPUT, ClawState.CLOSED),
+        BACK_DROP(LiftState.OUTPUT, ExtensionState.OUTPUT, WristState.OUTPUT, ClawState.WIDE);
 //
 //        BACK_CLOSED(LiftState.INTAKE, ExtensionState.BACK, WristState.BACK, ClawState.CLOSED),
 //        BACK_INTAKE(LiftState.INTAKE, ExtensionState.BACK, WristState.BACK, ClawState.OPEN);
@@ -70,8 +69,8 @@ class Manipulator(val log: Logger, config: Configuration) : Subsystem {
     var outputHeight = Lift.Height.HIGH
 
     val lift = Lift(log, config)
-    val extension = StatefulServo(config.servos["extension"], ExtensionState.FRONT)
-    val wrist = StatefulServo(config.servos["wrist"], WristState.FRONT)
+    val extension = StatefulServo(config.servos["extension"], ExtensionState.INTAKE)
+    val wrist = StatefulServo(config.servos["wrist"], WristState.INTAKE)
     val claw = StatefulServo(config.servos["claw"], ClawState.CLOSED)
 
     override val outputs: List<HardwareOutput> = listOf(extension, wrist, claw) + lift.outputs

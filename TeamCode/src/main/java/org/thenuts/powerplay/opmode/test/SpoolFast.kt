@@ -8,21 +8,25 @@ import com.qualcomm.robotcore.hardware.DcMotor
 @Autonomous
 @Config
 class SpoolFast : OpMode() {
-    lateinit var motor: DcMotor
+    lateinit var motor1: DcMotor
+    lateinit var motor2: DcMotor
 
     override fun init() {
-        motor = hardwareMap.dcMotor["slides"]
+        motor1 = hardwareMap.dcMotor["slides1"]
+        motor2 = hardwareMap.dcMotor["slides2"]
     }
 
     override fun loop() {
-        motor.power = SPOOL_POWER * gamepad1.right_stick_x
+        motor1.power = SPOOL_POWER * gamepad1.right_stick_x
+        motor2.power = SPOOL_POWER * gamepad1.right_stick_x
     }
 
     override fun stop() {
-        motor.power = 0.0
+        motor1.power = 0.0
+        motor2.power = 0.0
     }
 
     companion object {
-        @JvmField var SPOOL_POWER: Double = 0.2
+        @JvmField var SPOOL_POWER: Double = 1.0
     }
 }

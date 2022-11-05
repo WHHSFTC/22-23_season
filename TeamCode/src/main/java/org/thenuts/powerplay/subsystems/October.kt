@@ -18,10 +18,11 @@ class October(val log: Logger, val config: Configuration) : Robot() {
     override val hardwareScheduler: HardwareScheduler = bucket(20.milliseconds,
         listOf( // on ones
             // roadrunner drivetrain not managed through switchboard
+            rot(2.milliseconds, manip.extension, manip.wrist, manip.claw)
         ),
         listOf( // on twos
-            manip.lift.motor,
-            rot(4.milliseconds, manip.extension, manip.wrist, manip.claw)
+            manip.lift.motor1,
+            manip.lift.motor2,
         ),
         listOf(
 
