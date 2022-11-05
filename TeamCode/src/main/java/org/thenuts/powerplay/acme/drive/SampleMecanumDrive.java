@@ -61,8 +61,8 @@ import kotlin.Pair;
  */
 @Config
 public class SampleMecanumDrive extends MecanumDrive implements Command {
-    public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(0, 0, 0);
-    public static PIDCoefficients HEADING_PID = new PIDCoefficients(0, 0, 0);
+    public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(4, 0, 1);
+    public static PIDCoefficients HEADING_PID = new PIDCoefficients(5, 0, 0);
 
     public static double LATERAL_MULTIPLIER = 1;
 
@@ -158,19 +158,19 @@ public class SampleMecanumDrive extends MecanumDrive implements Command {
         trajectorySequenceRunner = new TrajectorySequenceRunner(follower, HEADING_PID);
     }
 
-    public TrajectoryBuilder trajectoryBuilder(Pose2d startPose) {
+    public static TrajectoryBuilder trajectoryBuilder(Pose2d startPose) {
         return new TrajectoryBuilder(startPose, VEL_CONSTRAINT, ACCEL_CONSTRAINT);
     }
 
-    public TrajectoryBuilder trajectoryBuilder(Pose2d startPose, boolean reversed) {
+    public static TrajectoryBuilder trajectoryBuilder(Pose2d startPose, boolean reversed) {
         return new TrajectoryBuilder(startPose, reversed, VEL_CONSTRAINT, ACCEL_CONSTRAINT);
     }
 
-    public TrajectoryBuilder trajectoryBuilder(Pose2d startPose, double startHeading) {
+    public static TrajectoryBuilder trajectoryBuilder(Pose2d startPose, double startHeading) {
         return new TrajectoryBuilder(startPose, startHeading, VEL_CONSTRAINT, ACCEL_CONSTRAINT);
     }
 
-    public TrajectorySequenceBuilder trajectorySequenceBuilder(Pose2d startPose) {
+    public static TrajectorySequenceBuilder trajectorySequenceBuilder(Pose2d startPose) {
         return new TrajectorySequenceBuilder(
                 startPose,
                 VEL_CONSTRAINT, ACCEL_CONSTRAINT,
