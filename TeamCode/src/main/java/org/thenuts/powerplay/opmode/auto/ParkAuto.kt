@@ -2,7 +2,8 @@ package org.thenuts.powerplay.opmode.auto
 
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp
+import org.thenuts.powerplay.game.Alliance
+import org.thenuts.powerplay.game.Mode
 import org.thenuts.powerplay.opmode.CommandLinearOpMode
 import org.thenuts.powerplay.subsystems.Manipulator
 import org.thenuts.powerplay.subsystems.October
@@ -12,7 +13,7 @@ import org.thenuts.switchboard.dsl.mkSequential
 import kotlin.time.Duration.Companion.milliseconds
 
 @Autonomous(preselectTeleOp = "OctoberTele")
-class OctoberAuto : CommandLinearOpMode<October>(::October) {
+class ParkAuto : CommandLinearOpMode<October>(::October, Alliance.RED, Mode.AUTO) {
     lateinit var cmd: Command
     override fun postStartHook() {
         cmd = mkSequential {

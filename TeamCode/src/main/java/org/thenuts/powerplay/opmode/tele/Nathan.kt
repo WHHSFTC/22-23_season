@@ -18,7 +18,7 @@ class Nathan(val gamepad: Gamepad, val bot: October) : Command {
     override fun update(frame: Frame) {
         pad.safeCopy(gamepad)
 
-//        var slidesPower = -pad.left_stick_y.toDouble()
+//        var slidesPower = -pad.right_stick_y.toDouble()
 //        if (slidesPower > SLIDES_DEADZONE) {
 //            slidesPower = (Lift.MAX_SLIDES_UP) * (slidesPower - SLIDES_DEADZONE)
 //        } else if (slidesPower < -SLIDES_DEADZONE) {
@@ -30,10 +30,10 @@ class Nathan(val gamepad: Gamepad, val bot: October) : Command {
 //        bot.lift.motor.power = slidesPower
 
         if (pad.right_trigger > 0.5) {
-            bot.manip.lift.state = Lift.State.Manual(-pad.left_stick_y.toDouble())
-            bot.log.out["manual"] = -pad.left_stick_y.toDouble()
+            bot.manip.lift.state = Lift.State.Manual(-pad.right_stick_y.toDouble())
+            bot.log.out["manual"] = -pad.right_stick_y.toDouble()
         } else if (prev.right_trigger > 0.5) {
-            bot.manip.lift.state = Lift.State.Manual(0.0)
+            bot.manip.lift.state = Lift.State.RunTo(bot.manip.lift.getPosition())
         }
 //
 //        val state = bot.manip.lift.state
@@ -71,11 +71,13 @@ class Nathan(val gamepad: Gamepad, val bot: October) : Command {
                 is Lift.State.Hold -> liftState.pos
             }
             if (pad.dpad_up && !prev.dpad_up) {
-                bot.manip.lift.state = Lift.State.RunTo(prevPos + Lift.CONE_STEP)
-            } else if (pad.dpad_left && !prev.dpad_left || pad.dpad_right && !prev.dpad_right) {
-                bot.manip.lift.state = Lift.State.RunTo(Lift.Height.ABOVE_STACK.pos)
+                bot.manip.lift.state = Lift.State.RunTo(prevPos + 2 * Lift.CONE_STEP)
             } else if (pad.dpad_down && !prev.dpad_down) {
-                bot.manip.lift.state = Lift.State.RunTo(max(0, prevPos - Lift.CONE_STEP))
+                bot.manip.lift.state = Lift.State.RunTo(max(0, prevPos - 2 * Lift.CONE_STEP))
+            } else if (pad.dpad_left && !prev.dpad_left) {
+                bot.manip.lift.state = Lift.State.RunTo(max(0, prevPos - Lift.CONE_STEP / 2))
+            } else if (pad.dpad_right && !prev.dpad_right) {
+                bot.manip.lift.state = Lift.State.RunTo(prevPos + Lift.CONE_STEP / 2)
             }
         } else {
             if (pad.dpad_up && !prev.dpad_up) {

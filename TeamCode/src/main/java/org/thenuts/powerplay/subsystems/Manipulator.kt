@@ -21,7 +21,11 @@ class Manipulator(val log: Logger, config: Configuration) : Subsystem {
     }
 
     enum class ClawState(override val pos: Double) : StatefulServo.ServoPosition {
-        WIDE(0.65), OPEN(0.65), CLOSED(0.5)
+        WIDE(0.61), OPEN(0.61), CLOSED(0.5)
+    }
+
+    enum class OutputSide {
+        SAMESIDE, PASSTHRU
     }
 
     enum class ManipulatorState(

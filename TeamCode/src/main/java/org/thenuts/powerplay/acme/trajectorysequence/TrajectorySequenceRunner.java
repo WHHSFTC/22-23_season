@@ -21,6 +21,8 @@ import org.thenuts.powerplay.acme.trajectorysequence.sequencesegment.TrajectoryS
 import org.thenuts.powerplay.acme.trajectorysequence.sequencesegment.TurnSegment;
 import org.thenuts.powerplay.acme.trajectorysequence.sequencesegment.WaitSegment;
 import org.thenuts.powerplay.acme.util.DashboardUtil;
+import org.thenuts.powerplay.opmode.CommandLinearOpMode;
+import org.thenuts.switchboard.command.Command;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -81,7 +83,7 @@ public class TrajectorySequenceRunner {
         Pose2d targetPose = null;
         DriveSignal driveSignal = null;
 
-        TelemetryPacket packet = new TelemetryPacket();
+        TelemetryPacket packet = CommandLinearOpMode.DashboardReceiver.getPacket();
         Canvas fieldOverlay = packet.fieldOverlay();
 
         SequenceSegment currentSegment = null;
@@ -193,8 +195,6 @@ public class TrajectorySequenceRunner {
         packet.put("headingError (deg)", Math.toDegrees(getLastPoseError().getHeading()));
 
         draw(fieldOverlay, currentTrajectorySequence, currentSegment, targetPose, poseEstimate);
-
-        dashboard.sendTelemetryPacket(packet);
 
         return driveSignal;
     }

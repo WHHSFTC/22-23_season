@@ -26,14 +26,17 @@ class Lift(val log: Logger, config: Configuration) : Subsystem {
     fun getPosition(): Int {
         val pos1 = encoder1.position
         val pos2 = encoder2.position
+        log.out["pos1"] = pos1
+        log.out["pos2"] = pos2
 
-        return if ((pos1 - pos2).absoluteValue < MAX_DIFF) {
-            (pos1 + pos2) / 2
-        } else if (encoder1.velocity == 0.0) {
-            pos2
-        } else {
-            pos1
-        }
+        return pos1
+//        return if ((pos1 - pos2).absoluteValue < MAX_DIFF) {
+//            (pos1 + pos2) / 2
+//        } else if (encoder1.velocity == 0.0) {
+//            pos2
+//        } else {
+//            pos1
+//        }
     }
 
     fun setPower(pow: Double) {
@@ -62,7 +65,7 @@ class Lift(val log: Logger, config: Configuration) : Subsystem {
 
     var state: State = State.IDLE
         set(value) {
-            runToController.reset()
+            resetController()
             field = value
         }
 
@@ -79,7 +82,7 @@ class Lift(val log: Logger, config: Configuration) : Subsystem {
         INTAKE(0), MIN_CLEAR(2300), ABOVE_STACK(1300),
 
         TERMINAL(100), GROUND(100),
-        LOW(1300), MID(2400), HIGH(3500);
+        LOW(1700), MID(2500), HIGH(3500);
     }
 
     val isBusy: Boolean
@@ -87,8 +90,8 @@ class Lift(val log: Logger, config: Configuration) : Subsystem {
             val state = state
             return when (state) {
                 State.ZERO -> true
-                is State.RunTo -> true
                 is State.Manual -> true
+                is State.RunTo -> (state.pos - getPosition()).absoluteValue < THRESHOLD
 
                 is State.Hold -> state.isManual
 
@@ -96,12 +99,22 @@ class Lift(val log: Logger, config: Configuration) : Subsystem {
             }
         }
 
-    val runToController = PIDFController(
+    var runToController = PIDFController(
         LIFT_RUN_TO_PID,
         LIFT_KV,
         LIFT_KA,
         LIFT_KS
     )
+
+    fun resetController() {
+        runToController = PIDFController(
+            LIFT_RUN_TO_PID,
+            LIFT_KV,
+            LIFT_KA,
+            LIFT_KS
+        )
+        runToController.reset()
+    }
 
     override fun update(frame: Frame) {
         var state = state
@@ -158,11 +171,14 @@ class Lift(val log: Logger, config: Configuration) : Subsystem {
                 runToController.targetPosition = state.pos.toDouble()
                 runToController.targetVelocity = 0.0
                 runToController.targetAcceleration = 0.0
+                val position = getPosition()
                 val output = runToController.update(
-                    measuredPosition = getPosition().toDouble(),
+                    measuredPosition = position.toDouble(),
                 )
-                log.out["PID output"] = output
-                log.out["static term"] = LIFT_KB + LIFT_KH * state.pos
+                log.out["slides target"] = state.pos
+                log.out["slides position"] = position
+                log.out["slides PID output"] = output
+                log.out["slides static term"] = LIFT_KB + LIFT_KH * state.pos
                 setPower(max(DROP_POWER, output + LIFT_KB + LIFT_KH * state.pos))
             }
             is State.Manual -> {
@@ -203,5 +219,7 @@ class Lift(val log: Logger, config: Configuration) : Subsystem {
         @JvmField var MAX_DIFF = 200
 
         @JvmField var CONE_STEP = 200
+
+        @JvmField var THRESHOLD = 50
     }
 }
