@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous
 import org.thenuts.powerplay.game.Alliance
 import org.thenuts.powerplay.game.Mode
 import org.thenuts.powerplay.opmode.CommandLinearOpMode
-import org.thenuts.powerplay.subsystems.Manipulator
+import org.thenuts.powerplay.subsystems.output.Output
 import org.thenuts.powerplay.subsystems.October
 import org.thenuts.switchboard.command.Command
 import org.thenuts.switchboard.command.CommandScheduler
@@ -23,7 +23,7 @@ class ParkAuto : CommandLinearOpMode<October>(::October, Alliance.RED, Mode.AUTO
             delay(800.milliseconds)
             task {
                 bot.drive.setWeightedDrivePower(Pose2d())
-                bot.manip.claw.state = Manipulator.ClawState.OPEN
+                bot.output.claw.state = Output.ClawState.OPEN
             }
             delay(2000.milliseconds)
         }

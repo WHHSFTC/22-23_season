@@ -1,10 +1,10 @@
-package org.thenuts.powerplay.subsystems
+package org.thenuts.powerplay.subsystems.output
 
 import com.acmerobotics.dashboard.config.Config
 import com.acmerobotics.roadrunner.control.PIDCoefficients
 import com.acmerobotics.roadrunner.control.PIDFController
-import com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior
 import com.qualcomm.robotcore.hardware.DcMotorSimple
+import org.thenuts.powerplay.subsystems.Subsystem
 import org.thenuts.switchboard.core.Logger
 import org.thenuts.switchboard.hardware.Configuration
 import org.thenuts.switchboard.hardware.Motor

@@ -3,7 +3,7 @@ package org.thenuts.powerplay.subsystems.intake
 import com.acmerobotics.dashboard.config.Config
 import com.acmerobotics.roadrunner.control.PIDCoefficients
 import com.acmerobotics.roadrunner.control.PIDFController
-import org.thenuts.powerplay.subsystems.StateMachine
+import org.thenuts.powerplay.subsystems.util.StateMachine
 import org.thenuts.powerplay.subsystems.Subsystem
 import org.thenuts.switchboard.core.Logger
 import org.thenuts.switchboard.hardware.Configuration

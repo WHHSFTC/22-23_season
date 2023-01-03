@@ -1,6 +1,6 @@
 package org.thenuts.powerplay.opmode.commands
 
-import org.thenuts.powerplay.subsystems.Lift
+import org.thenuts.powerplay.subsystems.output.Lift
 import org.thenuts.switchboard.command.Command
 import org.thenuts.switchboard.dsl.mkSequential
 

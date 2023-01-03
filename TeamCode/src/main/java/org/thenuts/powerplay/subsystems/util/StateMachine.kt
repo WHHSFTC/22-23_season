@@ -1,4 +1,4 @@
-package org.thenuts.powerplay.subsystems
+package org.thenuts.powerplay.subsystems.util
 
 import org.thenuts.switchboard.util.Frame
 

@@ -1,13 +1,15 @@
-package org.thenuts.powerplay.subsystems
+package org.thenuts.powerplay.subsystems.output
 
 import org.thenuts.powerplay.annotations.DiffField
+import org.thenuts.powerplay.subsystems.util.StatefulServo
+import org.thenuts.powerplay.subsystems.Subsystem
 import org.thenuts.switchboard.core.Logger
 import org.thenuts.switchboard.hardware.Configuration
 import org.thenuts.switchboard.hardware.HardwareOutput
 import kotlin.math.max
 import kotlin.time.Duration.Companion.seconds
 
-class Manipulator(val log: Logger, config: Configuration) : Subsystem {
+class Output(val log: Logger, config: Configuration) : Subsystem {
     enum class LiftState {
         INTAKE, CLEAR, OUTPUT
     }
