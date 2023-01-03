@@ -10,7 +10,7 @@ import org.thenuts.powerplay.opmode.commands.ExtendCommand
 import org.thenuts.powerplay.opmode.commands.RetractCommand
 import org.thenuts.powerplay.opmode.commands.OutputCommand
 import org.thenuts.powerplay.opmode.commands.go
-import org.thenuts.powerplay.subsystems.output.Lift
+import org.thenuts.powerplay.subsystems.output.VerticalSlides
 import org.thenuts.powerplay.subsystems.output.Output
 import org.thenuts.powerplay.subsystems.October
 import org.thenuts.switchboard.command.Command
@@ -20,7 +20,7 @@ import kotlin.math.PI
 import kotlin.time.Duration.Companion.milliseconds
 
 //@Autonomous(preselectTeleOp = "OctoberTele")
-abstract class ScoreLeftAuto(val scoreHeight: Lift.Height) : CommandLinearOpMode<October>(::October, Alliance.RED, Mode.AUTO) {
+abstract class ScoreLeftAuto(val scoreHeight: VerticalSlides.Height) : CommandLinearOpMode<October>(::October, Alliance.RED, Mode.AUTO) {
     lateinit var cmd: Command
     override fun postInitHook() {
         bot.vision?.front?.startDebug()
@@ -91,7 +91,7 @@ abstract class ScoreLeftAuto(val scoreHeight: Lift.Height) : CommandLinearOpMode
 }
 
 @Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
-class LeftAuto : ScoreLeftAuto(Lift.Height.LOW)
+class LeftAuto : ScoreLeftAuto(VerticalSlides.Height.LOW)
 
 @Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
-class RightAuto : ScoreLeftAuto(Lift.Height.MID)
+class RightAuto : ScoreLeftAuto(VerticalSlides.Height.MID)

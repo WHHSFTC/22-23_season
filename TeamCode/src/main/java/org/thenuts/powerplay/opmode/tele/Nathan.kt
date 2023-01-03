@@ -1,7 +1,7 @@
 package org.thenuts.powerplay.opmode.tele
 
 import com.qualcomm.robotcore.hardware.Gamepad
-import org.thenuts.powerplay.subsystems.output.Lift
+import org.thenuts.powerplay.subsystems.output.VerticalSlides
 import org.thenuts.powerplay.subsystems.output.Output
 import org.thenuts.powerplay.subsystems.October
 import org.thenuts.switchboard.command.Command
@@ -30,10 +30,10 @@ class Nathan(val gamepad: Gamepad, val bot: October) : Command {
 //        bot.lift.motor.power = slidesPower
 
         if (pad.right_trigger > 0.5) {
-            bot.output.lift.state = Lift.State.Manual(-pad.right_stick_y.toDouble())
+            bot.output.lift.state = VerticalSlides.State.Manual(-pad.right_stick_y.toDouble())
             bot.log.out["manual"] = -pad.right_stick_y.toDouble()
         } else if (prev.right_trigger > 0.5) {
-            bot.output.lift.state = Lift.State.RunTo(bot.output.lift.getPosition())
+            bot.output.lift.state = VerticalSlides.State.RunTo(bot.output.lift.getPosition())
         }
 //
 //        val state = bot.manip.lift.state
@@ -60,34 +60,34 @@ class Nathan(val gamepad: Gamepad, val bot: October) : Command {
         }
 
         if (pad.back && !prev.back) {
-            bot.output.lift.state = Lift.State.ZERO
+            bot.output.lift.state = VerticalSlides.State.ZERO
         }
 
         if (pad.left_trigger > 0.5) {
             val liftState = bot.output.lift.state
             val prevPos = when (liftState) {
-                Lift.State.IDLE, Lift.State.ZERO, is Lift.State.Manual -> 0
-                is Lift.State.RunTo -> liftState.pos
-                is Lift.State.Hold -> liftState.pos
+                VerticalSlides.State.IDLE, VerticalSlides.State.ZERO, is VerticalSlides.State.Manual -> 0
+                is VerticalSlides.State.RunTo -> liftState.pos
+                is VerticalSlides.State.Hold -> liftState.pos
             }
             if (pad.dpad_up && !prev.dpad_up) {
-                bot.output.lift.state = Lift.State.RunTo(prevPos + 2 * Lift.CONE_STEP)
+                bot.output.lift.state = VerticalSlides.State.RunTo(prevPos + 2 * VerticalSlides.CONE_STEP)
             } else if (pad.dpad_down && !prev.dpad_down) {
-                bot.output.lift.state = Lift.State.RunTo(max(0, prevPos - 2 * Lift.CONE_STEP))
+                bot.output.lift.state = VerticalSlides.State.RunTo(max(0, prevPos - 2 * VerticalSlides.CONE_STEP))
             } else if (pad.dpad_left && !prev.dpad_left) {
-                bot.output.lift.state = Lift.State.RunTo(max(0, prevPos - Lift.CONE_STEP / 2))
+                bot.output.lift.state = VerticalSlides.State.RunTo(max(0, prevPos - VerticalSlides.CONE_STEP / 2))
             } else if (pad.dpad_right && !prev.dpad_right) {
-                bot.output.lift.state = Lift.State.RunTo(prevPos + Lift.CONE_STEP / 2)
+                bot.output.lift.state = VerticalSlides.State.RunTo(prevPos + VerticalSlides.CONE_STEP / 2)
             }
         } else {
             if (pad.dpad_up && !prev.dpad_up) {
-                bot.output.lift.state = Lift.State.RunTo(Lift.Height.HIGH.pos)
+                bot.output.lift.state = VerticalSlides.State.RunTo(VerticalSlides.Height.HIGH.pos)
 //            bot.manip.outputHeight = Lift.Height.HIGH
             } else if (pad.dpad_left && !prev.dpad_left || pad.dpad_right && !prev.dpad_right) {
-                bot.output.lift.state = Lift.State.RunTo(Lift.Height.MID.pos)
+                bot.output.lift.state = VerticalSlides.State.RunTo(VerticalSlides.Height.MID.pos)
 //            bot.manip.outputHeight = Lift.Height.MID
             } else if (pad.dpad_down && !prev.dpad_down) {
-                bot.output.lift.state = Lift.State.RunTo(Lift.Height.LOW.pos)
+                bot.output.lift.state = VerticalSlides.State.RunTo(VerticalSlides.Height.LOW.pos)
 //            bot.manip.outputHeight = Lift.Height.LOW
             }
         }

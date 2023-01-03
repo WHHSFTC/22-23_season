@@ -72,24 +72,24 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
         }
     }
 
-    var outputHeight = Lift.Height.HIGH
+    var outputHeight = VerticalSlides.Height.HIGH
 
-    val lift = Lift(log, config)
+    val lift = VerticalSlides(log, config)
     val extension = StatefulServo(config.servos["extension"], ExtensionState.INTAKE)
     val wrist = StatefulServo(config.servos["wrist"], WristState.INTAKE)
     val claw = StatefulServo(config.servos["claw"], ClawState.CLOSED)
 
     override val outputs: List<HardwareOutput> = listOf(extension, wrist, claw) + lift.outputs
 
-    fun translate(our: LiftState): Lift.State = when (our) {
+    fun translate(our: LiftState): VerticalSlides.State = when (our) {
         LiftState.INTAKE -> {
-            Lift.State.ZERO
+            VerticalSlides.State.ZERO
         }
         LiftState.CLEAR -> {
-            Lift.State.RunTo(max(outputHeight.pos, Lift.Height.MIN_CLEAR.pos))
+            VerticalSlides.State.RunTo(max(outputHeight.pos, VerticalSlides.Height.MIN_CLEAR.pos))
         }
         LiftState.OUTPUT -> {
-            Lift.State.RunTo(outputHeight.pos)
+            VerticalSlides.State.RunTo(outputHeight.pos)
         }
     }
 
