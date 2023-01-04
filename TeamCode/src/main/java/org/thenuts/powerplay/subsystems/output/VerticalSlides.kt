@@ -14,7 +14,7 @@ import kotlin.math.absoluteValue
 import kotlin.math.max
 
 @Config
-class Lift(val log: Logger, config: Configuration) : Subsystem {
+class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
     val encoder1 = config.encoders["slides1"].also {
         it.stopAndReset()
     }
@@ -55,7 +55,7 @@ class Lift(val log: Logger, config: Configuration) : Subsystem {
     }
     val motor2 = config.motors["slides2"].also {
         it.zpb = Motor.ZeroPowerBehavior.BRAKE
-        (it as MotorImpl).m.direction = DcMotorSimple.Direction.REVERSE
+//        (it as MotorImpl).m.direction = DcMotorSimple.Direction.REVERSE
     }
 
     val leftSwitch = config.touchSensors["leftLimit"]
@@ -72,6 +72,7 @@ class Lift(val log: Logger, config: Configuration) : Subsystem {
     sealed class State {
         object IDLE : State()
         object ZERO : State()
+        object FIND_EDGE : State()
         data class RunTo(val pos: Int): State()
         data class Hold(val pos: Int, val isManual: Boolean): State()
         data class Manual(val velocity: Double): State()
@@ -90,6 +91,7 @@ class Lift(val log: Logger, config: Configuration) : Subsystem {
             val state = state
             return when (state) {
                 State.ZERO -> true
+                State.FIND_EDGE -> true
                 is State.Manual -> true
                 is State.RunTo -> (state.pos - getPosition()).absoluteValue < THRESHOLD
 
@@ -122,15 +124,21 @@ class Lift(val log: Logger, config: Configuration) : Subsystem {
         state = when (state) {
             State.ZERO, is State.Manual -> {
                 if (leftSwitch.pressed || rightSwitch.pressed) {
+                    setZpb(Motor.ZeroPowerBehavior.BRAKE)
+                    setPower(0.0)
+                    State.FIND_EDGE
+                } else {
+                    state
+                }
+            }
+
+            State.FIND_EDGE -> {
+                if (!leftSwitch.pressed && !rightSwitch.pressed) {
                     encoder1.stopAndReset()
                     encoder2.stopAndReset()
                     setZpb(Motor.ZeroPowerBehavior.BRAKE)
                     setPower(0.0)
-                    if (state == State.ZERO) {
-                        State.IDLE
-                    } else {
-                        state
-                    }
+                    State.IDLE
                 } else {
                     state
                 }
@@ -157,6 +165,10 @@ class Lift(val log: Logger, config: Configuration) : Subsystem {
                 setZpb(Motor.ZeroPowerBehavior.FLOAT)
                 setPower(DROP_POWER)
 //                }
+            }
+            State.FIND_EDGE -> {
+                setZpb(Motor.ZeroPowerBehavior.BRAKE)
+                setPower(EDGE_POWER)
             }
             is State.Hold -> {
                 setZpb(Motor.ZeroPowerBehavior.BRAKE)
@@ -215,6 +227,7 @@ class Lift(val log: Logger, config: Configuration) : Subsystem {
 
         @JvmField var BRAKE_HEIGHT = 0
         @JvmField var DROP_POWER = -0.5
+        @JvmField var EDGE_POWER = 0.25
 
         @JvmField var MAX_DIFF = 200
 

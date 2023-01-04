@@ -10,8 +10,8 @@ import org.thenuts.switchboard.command.CommandScheduler
 @TeleOp
 class OctoberTele : CommandLinearOpMode<October>(::October, Alliance.RED, Mode.TELE) {
     override fun postStartHook() {
-        sched.addCommand(Luke(gamepad1, bot))
-        sched.addCommand(Nathan(gamepad2, bot))
+        sched.addCommand(Driver1(gamepad1, bot))
+        sched.addCommand(Driver2(gamepad2, bot))
     }
 
     override fun loopHook() {
