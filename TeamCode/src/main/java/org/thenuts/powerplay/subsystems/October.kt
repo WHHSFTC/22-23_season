@@ -25,7 +25,7 @@ class October(val log: Logger, val config: Configuration, val alliance: Alliance
     override val hardwareScheduler: HardwareScheduler = bucket(20.milliseconds,
         listOf( // on ones
             // roadrunner drivetrain not managed through switchboard
-            rot(2.milliseconds, output.extension, output.wrist, output.claw)
+            rot(2.milliseconds, output.leftArm, output.rightArm, output.claw)
         ),
         listOf( // on twos
             all(output.lift.motor1, output.lift.motor2),

@@ -5,17 +5,36 @@ import org.thenuts.powerplay.subsystems.output.VerticalSlides
 import org.thenuts.powerplay.subsystems.output.Output
 import org.thenuts.powerplay.subsystems.October
 import org.thenuts.switchboard.command.Command
+import org.thenuts.switchboard.command.combinator.SlotCommand
 import org.thenuts.switchboard.util.Frame
 import java.lang.Integer.max
 
-class Nathan(val gamepad: Gamepad, val bot: October) : Command {
+class Driver2(val gamepad: Gamepad, val bot: October) : Command {
     override val done: Boolean = false
     val prev = Gamepad()
     val pad = Gamepad()
+    val outputSlot = SlotCommand()
 
     override val postreqs = listOf(bot.output to 10)
 
     override fun update(frame: Frame) {
+        controls(frame)
+        outputSlot.update(frame)
+    }
+
+    override fun cleanup() {
+        outputSlot.cleanup()
+    }
+
+    fun queueTo(target: Output.OutputState) {
+        outputSlot.queue(bot.output.transitionCommand(bot.output.state, target))
+    }
+
+    fun interruptTo(target: Output.OutputState) {
+        outputSlot.interrupt(bot.output.transitionCommand(bot.output.state, target))
+    }
+
+    fun controls(frame: Frame) {
         pad.safeCopy(gamepad)
 
 //        var slidesPower = -pad.right_stick_y.toDouble()
@@ -42,31 +61,41 @@ class Nathan(val gamepad: Gamepad, val bot: October) : Command {
 //        }
 
         if (pad.right_bumper && !prev.right_bumper) {
-            bot.output.claw.state = Output.ClawState.CLOSED
+            // close claw
+            when(bot.output.state) {
+                Output.OutputState.GROUND -> {
+                    interruptTo(Output.OutputState.INTAKE)
+                }
+
+                Output.OutputState.S_DROP -> {
+                    interruptTo(Output.OutputState.S_OUTPUT)
+                }
+
+                Output.OutputState.P_DROP -> {
+                    interruptTo(Output.OutputState.P_OUTPUT)
+                }
+            }
         } else if (pad.left_bumper && !prev.left_bumper) {
-            bot.output.claw.state = Output.ClawState.OPEN
-        }
+            // open claw
+            when(bot.output.state) {
+                Output.OutputState.INTAKE -> {
+                    interruptTo(Output.OutputState.GROUND)
+                }
 
-        if (pad.b && !prev.b) {
-            bot.output.wrist.state = Output.WristState.OUTPUT
-        } else if (pad.x && !prev.x) {
-            bot.output.wrist.state = Output.WristState.INTAKE
-        }
+                Output.OutputState.S_OUTPUT, Output.OutputState.S_LOWER -> {
+                    interruptTo(Output.OutputState.S_DROP)
+                }
 
-        if (pad.y && !prev.y) {
-            bot.output.extension.state = Output.ExtensionState.OUTPUT
-        } else if (pad.a && !prev.a) {
-            bot.output.extension.state = Output.ExtensionState.INTAKE
-        }
-
-        if (pad.back && !prev.back) {
-            bot.output.lift.state = VerticalSlides.State.ZERO
+                Output.OutputState.P_OUTPUT, Output.OutputState.P_LOWER -> {
+                    interruptTo(Output.OutputState.P_DROP)
+                }
+            }
         }
 
         if (pad.left_trigger > 0.5) {
             val liftState = bot.output.lift.state
             val prevPos = when (liftState) {
-                VerticalSlides.State.IDLE, VerticalSlides.State.ZERO, is VerticalSlides.State.Manual -> 0
+                VerticalSlides.State.IDLE, VerticalSlides.State.ZERO, VerticalSlides.State.FIND_EDGE, is VerticalSlides.State.Manual -> 0
                 is VerticalSlides.State.RunTo -> liftState.pos
                 is VerticalSlides.State.Hold -> liftState.pos
             }
@@ -81,15 +110,28 @@ class Nathan(val gamepad: Gamepad, val bot: October) : Command {
             }
         } else {
             if (pad.dpad_up && !prev.dpad_up) {
-                bot.output.lift.state = VerticalSlides.State.RunTo(VerticalSlides.Height.HIGH.pos)
-//            bot.manip.outputHeight = Lift.Height.HIGH
+                bot.output.outputHeight = VerticalSlides.Height.HIGH.pos
+                interruptTo(Output.OutputState.CLEAR)
+//                bot.output.lift.state = VerticalSlides.State.RunTo(VerticalSlides.Height.HIGH.pos)
             } else if (pad.dpad_left && !prev.dpad_left || pad.dpad_right && !prev.dpad_right) {
-                bot.output.lift.state = VerticalSlides.State.RunTo(VerticalSlides.Height.MID.pos)
-//            bot.manip.outputHeight = Lift.Height.MID
+                bot.output.outputHeight = VerticalSlides.Height.MID.pos
+                interruptTo(Output.OutputState.CLEAR)
+//                bot.output.lift.state = VerticalSlides.State.RunTo(VerticalSlides.Height.MID.pos)
             } else if (pad.dpad_down && !prev.dpad_down) {
-                bot.output.lift.state = VerticalSlides.State.RunTo(VerticalSlides.Height.LOW.pos)
-//            bot.manip.outputHeight = Lift.Height.LOW
+                bot.output.outputHeight = VerticalSlides.Height.LOW.pos
+                interruptTo(Output.OutputState.CLEAR)
+//                bot.output.lift.state = VerticalSlides.State.RunTo(VerticalSlides.Height.LOW.pos)
             }
+        }
+
+        if (pad.b && !prev.b) {
+            interruptTo(Output.OutputState.S_LOWER)
+        } else if (pad.x && !prev.x) {
+            interruptTo(Output.OutputState.P_LOWER)
+        } else if (pad.y && !prev.y) {
+            interruptTo(Output.OutputState.CLEAR)
+        } else if (pad.a && !prev.a) {
+            interruptTo(Output.OutputState.GROUND)
         }
 
         bot.log.out["lift pos"] = bot.output.lift.encoder1.position

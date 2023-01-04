@@ -6,12 +6,9 @@ import org.thenuts.powerplay.game.Alliance
 import org.thenuts.powerplay.game.Mode
 import org.thenuts.powerplay.game.Signal
 import org.thenuts.powerplay.opmode.CommandLinearOpMode
-import org.thenuts.powerplay.opmode.commands.ExtendCommand
-import org.thenuts.powerplay.opmode.commands.RetractCommand
 import org.thenuts.powerplay.opmode.commands.OutputCommand
 import org.thenuts.powerplay.opmode.commands.go
 import org.thenuts.powerplay.subsystems.output.VerticalSlides
-import org.thenuts.powerplay.subsystems.output.Output
 import org.thenuts.powerplay.subsystems.October
 import org.thenuts.switchboard.command.Command
 import org.thenuts.switchboard.command.CommandScheduler
@@ -42,7 +39,7 @@ abstract class ScoreLeftAuto(val scoreHeight: VerticalSlides.Height) : CommandLi
         bot.vision?.gamepad = null
         bot.drive.poseEstimate = Pose2d(0.0, -7.0, PI)
         cmd = mkSequential {
-            add(ExtendCommand(bot.output, scoreHeight, Output.OutputSide.SAMESIDE))
+//            add(ExtendCommand(bot.output, scoreHeight, Output.OutputSide.SAMESIDE))
             go(bot.drive, Pose2d(0.0, -7.0, PI)) {
                 strafeRight(7.0)
                 back(50.0)
@@ -57,7 +54,7 @@ abstract class ScoreLeftAuto(val scoreHeight: VerticalSlides.Height) : CommandLi
                 forward(8.0)
                 strafeLeft(16.0)
             }
-            add(RetractCommand(bot.output, scoreHeight, Output.OutputSide.SAMESIDE))
+//            add(RetractCommand(bot.output, scoreHeight, Output.OutputSide.SAMESIDE))
             switch({ bot.vision!!.signal.finalTarget }) {
                 value(Signal.LEFT) {
                     go(bot.drive, Pose2d(26.0, 0.0, PI)) {

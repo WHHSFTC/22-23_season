@@ -7,7 +7,7 @@ import org.thenuts.powerplay.subsystems.October
 import org.thenuts.switchboard.command.Command
 import org.thenuts.switchboard.util.Frame
 
-class Luke(val gamepad: Gamepad, val bot: October) : Command {
+class Driver1(val gamepad: Gamepad, val bot: October) : Command {
     override val done: Boolean = false
     val prev = Gamepad()
     val pad = Gamepad()
