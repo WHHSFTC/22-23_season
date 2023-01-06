@@ -15,7 +15,7 @@ class Driver2(val gamepad: Gamepad, val bot: October) : Command {
     val pad = Gamepad()
     val outputSlot = SlotCommand()
 
-    override val postreqs = listOf(bot.output to 10)
+    override val postreqs = listOf(bot.output to 10, bot.output.lift to 10)
 
     override fun update(frame: Frame) {
         controls(frame)
