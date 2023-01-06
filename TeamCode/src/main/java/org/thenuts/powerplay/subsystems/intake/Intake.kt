@@ -15,11 +15,11 @@ class Intake(val log: Logger, config: Configuration) : Subsystem {
     val slides = LinkageSlides(log, config)
 
     enum class ClawState(override val pos: Double) : StatefulServo.ServoPosition {
-        OPEN(0.5), CLOSED(0.0)
+        OPEN(0.42), CLOSED(0.05)
     }
 
     enum class ArmState(override val pos: Double) : StatefulServo.ServoPosition {
-        ONE(0.0), TWO(0.0), THREE(0.0), FOUR(0.0), FIVE(0.0),
+        ONE(0.83), TWO(0.0), THREE(0.0), FOUR(0.0), FIVE(0.0),
         CLEAR(0.0), TRANSFER(0.0), STORE(0.0), INIT(0.0)
     }
 
@@ -28,7 +28,7 @@ class Intake(val log: Logger, config: Configuration) : Subsystem {
     val leftArm = config.servos["left_intake"]
     val rightArm = config.servos["right_intake"]
 
-    val arm = StatefulServo(LinkedServos(leftArm, rightArm, 0.0 to 1.0, 1.0 to 0.0), ArmState.INIT)
+    val arm = StatefulServo(LinkedServos(leftArm, rightArm, 0.01 to 1.0, 1.0 to 0.01), ArmState.INIT)
 
     override val children: List<Subsystem> = listOf(slides)
     override val outputs: List<HardwareOutput> = listOf(claw, leftArm, rightArm)

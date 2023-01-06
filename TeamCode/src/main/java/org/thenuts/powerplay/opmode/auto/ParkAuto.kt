@@ -23,7 +23,7 @@ class ParkAuto : CommandLinearOpMode<October>(::October, Alliance.RED, Mode.AUTO
             delay(800.milliseconds)
             task {
                 bot.drive.setWeightedDrivePower(Pose2d())
-                bot.output.claw.state = Output.ClawState.OPEN
+                bot.output.claw.state = Output.ClawState.WIDE
             }
             delay(2000.milliseconds)
         }

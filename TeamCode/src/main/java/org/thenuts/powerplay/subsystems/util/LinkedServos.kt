@@ -8,6 +8,8 @@ class LinkedServos(val first: Servo, val second: Servo, val zero: Pair<Double, D
     override var position: Double = 0.0
         set(value) {
             pair = zero + (one - zero) * value
+            first.position = pair.first
+            second.position = pair.second
             field = value
         }
 

@@ -125,9 +125,9 @@ class Driver2(val gamepad: Gamepad, val bot: October) : Command {
         }
 
         if (pad.b && !prev.b) {
-            interruptTo(Output.OutputState.S_LOWER)
-        } else if (pad.x && !prev.x) {
             interruptTo(Output.OutputState.P_LOWER)
+        } else if (pad.x && !prev.x) {
+            interruptTo(Output.OutputState.S_LOWER)
         } else if (pad.y && !prev.y) {
             interruptTo(Output.OutputState.CLEAR)
         } else if (pad.a && !prev.a) {

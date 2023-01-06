@@ -24,8 +24,8 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
     }
 
     fun getPosition(): Int {
-        val pos1 = encoder1.position
-        val pos2 = encoder2.position
+        val pos1 = -encoder1.position
+        val pos2 = -encoder2.position
         log.out["pos1"] = pos1
         log.out["pos2"] = pos2
 
@@ -80,10 +80,10 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
 
     @Config
     enum class Height(@JvmField var pos: Int) {
-        INTAKE(0), MIN_CLEAR(2300), ABOVE_STACK(1300),
+        INTAKE(0), MIN_CLEAR(870), ABOVE_STACK(500),
 
-        TERMINAL(100), GROUND(100),
-        LOW(1700), MID(2500), HIGH(3500);
+        TERMINAL(38), GROUND(38),
+        LOW(645), MID(700), HIGH(800);
     }
 
     val isBusy: Boolean
@@ -214,7 +214,7 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
 //        @JvmField var MAX_SLIDES_DOWN = 0.1
 
         @JvmField var LIFT_RUN_TO_PID = PIDCoefficients(
-            kP = 0.002,
+            kP = 0.0002,
         )
         @JvmField var LIFT_KV = 1.0
         @JvmField var LIFT_KA = 0.0

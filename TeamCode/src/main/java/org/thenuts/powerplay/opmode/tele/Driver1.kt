@@ -7,6 +7,7 @@ import org.thenuts.powerplay.subsystems.October
 import org.thenuts.powerplay.subsystems.intake.Intake
 import org.thenuts.powerplay.subsystems.intake.LinkageSlides
 import org.thenuts.powerplay.subsystems.intake.LinkageSlides.Companion.ticksToInches
+import org.thenuts.powerplay.subsystems.output.Output
 import org.thenuts.switchboard.command.Command
 import org.thenuts.switchboard.command.combinator.SlotCommand
 import org.thenuts.switchboard.dsl.mkSequential
@@ -44,7 +45,7 @@ class Driver1(val gamepad: Gamepad, val bot: October) : Command {
 //            y = (if (pad.dpad_left) 1.0 else 0.0) - (if (pad.dpad_right) 1.0 else 0.0)
 //        }
 
-        val turtle = pad.left_trigger > 0.5 || pad.right_trigger > 0.5 || bot.output.lift.getPosition() > VerticalSlides.Height.LOW.pos + 200
+        val turtle = pad.shift() || bot.output.lift.getPosition() > VerticalSlides.Height.LOW.pos + 200
         val scalar = if (turtle) 0.5 else 1.0
 
         val pow = Pose2d(x * scalar, y * scalar, omega)
@@ -59,10 +60,15 @@ class Driver1(val gamepad: Gamepad, val bot: October) : Command {
             pad.dpad_down && !prev.dpad_down -> bot.intake.arm.state = Intake.ArmState.values()[stackHeight - 1]
             pad.left_bumper && !prev.left_bumper -> bot.intake.claw.state = Intake.ClawState.OPEN
             pad.right_bumper && !prev.right_bumper -> bot.intake.claw.state = Intake.ClawState.CLOSED
+            pad.back && !prev.back -> {
+                if (bot.output.state == Output.OutputState.GROUND || bot.output.state == Output.OutputState.INTAKE) {
+                    bot.intake.arm.state = Intake.ArmState.STORE
+                }
+            }
         }
 
         val stick = pad.right_stick_y.toDouble()
-        if (stick.absoluteValue >= 0.2 && pad.left_trigger > 0.5 && pad.right_trigger > 0.5) {
+        if (stick.absoluteValue >= 0.2 && pad.shift()) {
             // map [0.2, 1.0] on stick to [0.0, 1.0] powers
             val slidesPower = (stick.absoluteValue - 0.2) / 0.8 * stick.sign
             bot.intake.slides.machine.switch(LinkageSlides.State.Manual(slidesPower))
@@ -86,9 +92,24 @@ class Driver1(val gamepad: Gamepad, val bot: October) : Command {
                     task { bot.intake.slides.machine.switch(LinkageSlides.State.RunTo(10.0)) }
                     await { !bot.intake.slides.isBusy }
                     task { bot.intake.arm.state = Intake.ArmState.TRANSFER }
-                    delay(500.milliseconds)
+                    // wait for output to be ready
+                    par(awaitAll = true) {
+                        await { !bot.output.isBusy && bot.output.state == Output.OutputState.GROUND }
+                        delay(500.milliseconds)
+                    }
+
                     task { bot.intake.slides.machine.switch(LinkageSlides.State.RunTo(0.0)) }
                     await { !bot.intake.slides.isBusy }
+                    task { bot.intake.claw.state = Intake.ClawState.OPEN }
+                    delay(500.milliseconds)
+
+                    // get out of output's way:
+                    task { bot.intake.arm.state = Intake.ArmState.CLEAR }
+                    task { bot.intake.slides.machine.switch(LinkageSlides.State.RunTo(10.0)) }
+                    par(awaitAll = true) {
+                        delay(500.milliseconds)
+                        await { !bot.intake.slides.isBusy }
+                    }
                 })
             }
         }

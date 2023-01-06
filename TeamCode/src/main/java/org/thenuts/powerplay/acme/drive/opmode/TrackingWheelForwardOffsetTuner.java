@@ -82,7 +82,7 @@ public class TrackingWheelForwardOffsetTuner extends LinearOpMode {
                 drive.update();
             }
 
-            double forwardOffset = StandardTrackingWheelLocalizer.FORWARD_OFFSET +
+            double forwardOffset = StandardTrackingWheelLocalizer.BACK_OFFSET +
                     drive.getPoseEstimate().getY() / headingAccumulator;
             forwardOffsetStats.add(forwardOffset);
 

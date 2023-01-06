@@ -15,11 +15,11 @@ import kotlin.time.Duration.Companion.seconds
 
 class Output(val log: Logger, config: Configuration) : Subsystem {
     enum class ArmState(override val pos: Double) : StatefulServo.ServoPosition {
-        PASSTHRU_OUTPUT(0.01), CLEAR(0.5), SAMESIDE_OUTPUT(0.8), INTAKE(1.0)
+        PASSTHRU_OUTPUT(0.09), CLEAR(0.5), SAMESIDE_OUTPUT(0.8), INTAKE(0.9)
     }
 
     enum class ClawState(override val pos: Double) : StatefulServo.ServoPosition {
-        WIDE(0.61), OPEN(0.61), CLOSED(0.5)
+        WIDE(0.46), OPEN(0.25), CLOSED(0.1)
     }
 
     enum class LiftState {
@@ -53,18 +53,18 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
         @DiffField val arm: ArmState,
         @DiffField val claw: ClawState,
     ) {
-        GROUND(LiftState.INTAKE, ArmState.INTAKE, ClawState.OPEN),
+        GROUND(LiftState.INTAKE, ArmState.INTAKE, ClawState.WIDE),
         INTAKE(LiftState.INTAKE, ArmState.INTAKE, ClawState.CLOSED),
 
         CLEAR(LiftState.CLEAR, ArmState.CLEAR, ClawState.CLOSED),
 
         S_OUTPUT(LiftState.OUTPUT, ArmState.CLEAR, ClawState.CLOSED),
         S_LOWER(LiftState.OUTPUT, ArmState.SAMESIDE_OUTPUT, ClawState.CLOSED),
-        S_DROP(LiftState.OUTPUT, ArmState.SAMESIDE_OUTPUT, ClawState.WIDE),
+        S_DROP(LiftState.OUTPUT, ArmState.SAMESIDE_OUTPUT, ClawState.OPEN),
 
         P_OUTPUT(LiftState.OUTPUT, ArmState.CLEAR, ClawState.CLOSED),
         P_LOWER(LiftState.OUTPUT, ArmState.PASSTHRU_OUTPUT, ClawState.CLOSED),
-        P_DROP(LiftState.OUTPUT, ArmState.PASSTHRU_OUTPUT, ClawState.WIDE);
+        P_DROP(LiftState.OUTPUT, ArmState.PASSTHRU_OUTPUT, ClawState.OPEN);
 //
 //        BACK_CLOSED(LiftState.INTAKE, ExtensionState.BACK, ClawState.CLOSED),
 //        BACK_INTAKE(LiftState.INTAKE, ExtensionState.BACK, ClawState.OPEN);
@@ -131,7 +131,7 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
         }
 
     val lift = VerticalSlides(log, config)
-    val claw = StatefulServo(config.servos["claw"], ClawState.OPEN)
+    val claw = StatefulServo(config.servos["claw_output"], ClawState.WIDE)
 
     val leftArm = config.servos["left_output"]
     val rightArm = config.servos["right_output"]
