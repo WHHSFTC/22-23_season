@@ -20,17 +20,17 @@ class October(val log: Logger, val config: Configuration, val alliance: Alliance
     val vision: Vision? = if (mode == Mode.AUTO) Vision(log, config, alliance) else null
 
     override val initCommands = listOf<Command>()
-    override val startCommands = listOf<Command>(drive, output, output.lift, intake, intake.slides)
+    override val startCommands = listOf<Command>(drive, output, output.lift /*, intake, intake.slides */)
 
     override val hardwareScheduler: HardwareScheduler = bucket(20.milliseconds,
         listOf( // on ones
             // roadrunner drivetrain not managed through switchboard
             rot(2.milliseconds, output.leftArm, output.rightArm, output.claw),
-            rot(2.milliseconds, intake.leftArm, intake.rightArm, intake.claw),
+//            rot(2.milliseconds, intake.leftArm, intake.rightArm, intake.claw),
         ),
         listOf( // on twos
             all(output.lift.motor1, output.lift.motor2),
-            intake.slides.motor
+//            intake.slides.motor
         ),
         listOf(
 
