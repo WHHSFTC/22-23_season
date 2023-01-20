@@ -5,6 +5,8 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.localization.ThreeTrackingWheelLocalizer;
+import com.acmerobotics.roadrunner.localization.TwoTrackingWheelLocalizer;
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.thenuts.powerplay.acme.util.Encoder;
@@ -26,7 +28,8 @@ import java.util.List;
  *
  */
 @Config
-public class StandardTrackingWheelLocalizer extends ThreeTrackingWheelLocalizer {
+//public class StandardTrackingWheelLocalizer extends ThreeTrackingWheelLocalizer {
+public class StandardTrackingWheelLocalizer extends TwoTrackingWheelLocalizer {
     public static double TICKS_PER_REV = 8192;
     public static double WHEEL_RADIUS = 0.6889764; // in
     public static double GEAR_RATIO = 1; // output (wheel) speed / input (encoder) speed
@@ -35,20 +38,23 @@ public class StandardTrackingWheelLocalizer extends ThreeTrackingWheelLocalizer 
     public static double BACK_OFFSET = -4.55380; // in; offset of the lateral wheel
     public static double FRONT_OFFSET = -4.89501; // in; offset of the lateral wheel
 
-    private Encoder leftEncoder, rightEncoder, backEncoder;
+    private Encoder leftEncoder, rightEncoder, backEncoder, frontEncoder;
+    private BNO055IMU imu;
 
     // BACK IS INTAKE, FRONT IS OUTPUT
-    public StandardTrackingWheelLocalizer(HardwareMap hardwareMap) {
+    public StandardTrackingWheelLocalizer(HardwareMap hardwareMap, BNO055IMU imu) {
         super(Arrays.asList(
-                new Pose2d(0.82497, LATERAL_DISTANCE / 2, 0), // left
+//                new Pose2d(0.82497, LATERAL_DISTANCE / 2, 0), // left
                 new Pose2d(0.82497, -LATERAL_DISTANCE / 2, 0), // right
                 new Pose2d(BACK_OFFSET, -0.02949, Math.toRadians(90)) // back
 //                new Pose2d(FRONT_OFFSET, -0.02949, Math.toRadians(90)) // front
         ));
 
-        leftEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "motorLF"));
-        rightEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "motorRF"));
-        backEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "motorRB"));
+//        leftEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "motorLB"));
+        rightEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "motorRB"));
+        backEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "motorRF"));
+//        frontEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "motorLF"));
+        this.imu = imu;
 
         // TODO: reverse any encoders using Encoder.setDirection(Encoder.Direction.REVERSE)
     }
@@ -61,9 +67,10 @@ public class StandardTrackingWheelLocalizer extends ThreeTrackingWheelLocalizer 
     @Override
     public List<Double> getWheelPositions() {
         return Arrays.asList(
-                encoderTicksToInches(leftEncoder.getCurrentPosition()),
+//                encoderTicksToInches(leftEncoder.getCurrentPosition()),
                 encoderTicksToInches(rightEncoder.getCurrentPosition()),
                 encoderTicksToInches(backEncoder.getCurrentPosition())
+//                encoderTicksToInches(frontEncoder.getCurrentPosition())
         );
     }
 
@@ -75,9 +82,15 @@ public class StandardTrackingWheelLocalizer extends ThreeTrackingWheelLocalizer 
         //  compensation method
 
         return Arrays.asList(
-                encoderTicksToInches(leftEncoder.getRawVelocity()),
+//                encoderTicksToInches(leftEncoder.getRawVelocity()),
                 encoderTicksToInches(rightEncoder.getRawVelocity()),
                 encoderTicksToInches(backEncoder.getRawVelocity())
+//                encoderTicksToInches(frontEncoder.getCurrentPosition())
         );
+    }
+
+    @Override
+    public double getHeading() {
+        return imu.getAngularOrientation().firstAngle;
     }
 }

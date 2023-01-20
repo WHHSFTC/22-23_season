@@ -110,20 +110,20 @@ class SignalProcessor(val cam: Camera, alliance: Alliance) {
     }
 
     companion object {
-        @JvmField var RED_REGION_X = 370
-        @JvmField var RED_REGION_Y = 210
+        @JvmField var RED_REGION_X = 150
+        @JvmField var RED_REGION_Y = 140
 
         @JvmField var BLUE_REGION_X = 95
         @JvmField var BLUE_REGION_Y = 350
 
+        @JvmField var REGION_HEIGHT = 125
         @JvmField var REGION_WIDTH = 95
-        @JvmField var REGION_HEIGHT = 50
 
         @JvmField var LEFT_LOWER_Y = 0.0
         @JvmField var LEFT_LOWER_Cr = 130.0
         @JvmField var LEFT_LOWER_Cb = 130.0
         @JvmField var LEFT_UPPER_Y = 255.0
-        @JvmField var LEFT_UPPER_Cr = 170.0
+        @JvmField var LEFT_UPPER_Cr = 190.0
         @JvmField var LEFT_UPPER_Cb = 200.0
         val LEFT_LOWER: Scalar get() = Scalar(LEFT_LOWER_Y, LEFT_LOWER_Cr, LEFT_LOWER_Cb)
         val LEFT_UPPER: Scalar get() = Scalar(LEFT_UPPER_Y, LEFT_UPPER_Cr, LEFT_UPPER_Cb)

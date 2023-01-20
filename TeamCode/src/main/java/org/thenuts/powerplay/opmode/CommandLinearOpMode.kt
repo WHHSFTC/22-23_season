@@ -34,6 +34,8 @@ abstract class CommandLinearOpMode<T: Robot>(val robotSupplier: (Logger, Configu
     open fun stopHook() { }
 
     companion object DashboardReceiver : Logger.LogReceiver {
+        var ENABLED = false
+
         val dash = FtcDashboard.getInstance()
         var packet: TelemetryPacket = TelemetryPacket()
         init {
@@ -51,6 +53,7 @@ abstract class CommandLinearOpMode<T: Robot>(val robotSupplier: (Logger, Configu
     }
 
     override fun runOpMode() {
+        ENABLED = true
         log = Logger(telemetry)
         log.addReceiver(DashboardReceiver)
         config = Configuration(hardwareMap, log)
@@ -89,6 +92,7 @@ abstract class CommandLinearOpMode<T: Robot>(val robotSupplier: (Logger, Configu
         sched.clear()
         bot.hardwareScheduler.output(all = true)
         log.update()
+        ENABLED = false
     }
 
     private fun updateFrom(basis: Duration) {

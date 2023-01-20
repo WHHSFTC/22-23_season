@@ -2,6 +2,7 @@ package org.thenuts.powerplay.opmode.auto
 
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
+import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import org.thenuts.powerplay.game.Alliance
 import org.thenuts.powerplay.game.Mode
 import org.thenuts.powerplay.game.Signal
@@ -87,8 +88,10 @@ abstract class ScoreLeftAuto(val scoreHeight: VerticalSlides.Height) : CommandLi
     }
 }
 
+@Disabled
 @Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
 class LeftAuto : ScoreLeftAuto(VerticalSlides.Height.LOW)
 
+@Disabled
 @Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
 class RightAuto : ScoreLeftAuto(VerticalSlides.Height.MID)

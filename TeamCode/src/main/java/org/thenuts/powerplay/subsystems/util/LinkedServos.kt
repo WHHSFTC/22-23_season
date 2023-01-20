@@ -4,16 +4,16 @@ import org.thenuts.switchboard.hardware.Servo
 import kotlin.time.Duration
 import kotlin.time.times
 
-class LinkedServos(val first: Servo, val second: Servo, val zero: Pair<Double, Double>, val one: Pair<Double, Double>) : Servo {
+class LinkedServos(val first: Servo, val second: Servo, val zero: () -> Pair<Double, Double>, val one: () -> Pair<Double, Double>) : Servo {
     override var position: Double = 0.0
         set(value) {
-            pair = zero + (one - zero) * value
+            pair = zero() + (one() - zero()) * value
             first.position = pair.first
             second.position = pair.second
             field = value
         }
 
-    var pair: Pair<Double, Double> = zero
+    var pair: Pair<Double, Double> = zero()
         private set
 
     override fun output(all: Boolean) {

@@ -45,7 +45,7 @@ class Driver1(val gamepad: Gamepad, val bot: October) : Command {
 //            y = (if (pad.dpad_left) 1.0 else 0.0) - (if (pad.dpad_right) 1.0 else 0.0)
 //        }
 
-        val turtle = pad.shift() || bot.output.lift.getPosition() > VerticalSlides.Height.LOW.pos + 200
+        val turtle = pad.shift() // || bot.output.lift.getPosition() > VerticalSlides.Height.LOW.pos + 200
         val scalar = if (turtle) 0.5 else 1.0
 
         val pow = Pose2d(x * scalar, y * scalar, omega)

@@ -28,7 +28,7 @@ class Intake(val log: Logger, config: Configuration) : Subsystem {
     val leftArm = config.servos["left_intake"]
     val rightArm = config.servos["right_intake"]
 
-    val arm = StatefulServo(LinkedServos(leftArm, rightArm, 0.01 to 1.0, 1.0 to 0.01), ArmState.INIT)
+    val arm = StatefulServo(LinkedServos(leftArm, rightArm,  { 0.01 to 1.0 }, { 1.0 to 0.01 }), ArmState.INIT)
 
     override val children: List<Subsystem> = listOf(slides)
     override val outputs: List<HardwareOutput> = listOf(claw, leftArm, rightArm)

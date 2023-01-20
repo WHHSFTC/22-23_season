@@ -83,7 +83,12 @@ public class TrajectorySequenceRunner {
         Pose2d targetPose = null;
         DriveSignal driveSignal = null;
 
-        TelemetryPacket packet = CommandLinearOpMode.DashboardReceiver.getPacket();
+        TelemetryPacket packet;
+        if (CommandLinearOpMode.DashboardReceiver.getENABLED()) {
+            packet = CommandLinearOpMode.DashboardReceiver.getPacket();
+        } else {
+            packet = new TelemetryPacket();
+        }
         Canvas fieldOverlay = packet.fieldOverlay();
 
         SequenceSegment currentSegment = null;
@@ -195,6 +200,9 @@ public class TrajectorySequenceRunner {
         packet.put("headingError (deg)", Math.toDegrees(getLastPoseError().getHeading()));
 
         draw(fieldOverlay, currentTrajectorySequence, currentSegment, targetPose, poseEstimate);
+
+        if (!CommandLinearOpMode.DashboardReceiver.getENABLED())
+            dashboard.sendTelemetryPacket(packet);
 
         return driveSignal;
     }

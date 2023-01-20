@@ -1,5 +1,7 @@
 package org.thenuts.powerplay.opmode.test;
 
+import android.annotation.SuppressLint;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -85,6 +87,7 @@ public class ServoTest extends LinearOpMode {
             telemetry.addData("enabled" + name, ((ServoImplEx) servo).isPwmEnabled());
         }
 
+        @SuppressLint("SuspiciousIndentation")
         void testServos() throws InterruptedException {
             while (opModeIsActive()) {
                 servo = servos.get(i);

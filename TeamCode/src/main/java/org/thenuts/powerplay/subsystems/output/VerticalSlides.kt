@@ -80,10 +80,10 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
 
     @Config
     enum class Height(@JvmField var pos: Int) {
-        INTAKE(0), MIN_CLEAR(870), ABOVE_STACK(500),
+        INTAKE(0), MIN_CLEAR(0), ABOVE_STACK(500),
 
         TERMINAL(38), GROUND(38),
-        LOW(645), MID(700), HIGH(800);
+        LOW(0), MID(390), HIGH(765);
     }
 
     val isBusy: Boolean
@@ -93,7 +93,7 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
                 State.ZERO -> true
                 State.FIND_EDGE -> true
                 is State.Manual -> true
-                is State.RunTo -> (state.pos - getPosition()).absoluteValue < THRESHOLD
+                is State.RunTo -> (state.pos - getPosition()).absoluteValue > BUSY_THRESHOLD
 
                 is State.Hold -> state.isManual
 
@@ -191,7 +191,13 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
                 log.out["slides position"] = position
                 log.out["slides PID output"] = output
                 log.out["slides static term"] = LIFT_KB + LIFT_KH * state.pos
-                setPower(max(DROP_POWER, output + LIFT_KB + LIFT_KH * state.pos))
+                var power = max(DROP_POWER, output + LIFT_KB + LIFT_KH * state.pos)
+                if (position < INSIDE_BOT) {
+                    if (power > 0.0)
+                        power += BOT_FRICTION
+                    else power = max(INSIDE_DROP_POWER, power)
+                }
+                setPower(power)
             }
             is State.Manual -> {
                 setZpb(Motor.ZeroPowerBehavior.FLOAT)
@@ -214,14 +220,14 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
 //        @JvmField var MAX_SLIDES_DOWN = 0.1
 
         @JvmField var LIFT_RUN_TO_PID = PIDCoefficients(
-            kP = 0.0002,
+            kP = 0.005,
         )
         @JvmField var LIFT_KV = 1.0
         @JvmField var LIFT_KA = 0.0
 
         @JvmField var LIFT_KS = 0.0
         @JvmField var LIFT_KB = 0.0
-        @JvmField var LIFT_KH = 0.0
+        @JvmField var LIFT_KH = 0.0002
 
         @JvmField var TOLERANCE = 200
 
@@ -231,8 +237,12 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
 
         @JvmField var MAX_DIFF = 200
 
-        @JvmField var CONE_STEP = 200
+        @JvmField var CONE_STEP = 5
 
-        @JvmField var THRESHOLD = 50
+        @JvmField var BUSY_THRESHOLD = 150
+
+        @JvmField var INSIDE_BOT = 260
+        @JvmField var INSIDE_DROP_POWER = -0.25
+        @JvmField var BOT_FRICTION = 0.1
     }
 }
