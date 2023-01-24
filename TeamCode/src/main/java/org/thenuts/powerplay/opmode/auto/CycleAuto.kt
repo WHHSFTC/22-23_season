@@ -3,22 +3,17 @@ package org.thenuts.powerplay.opmode.auto
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.geometry.Vector2d
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
-import org.thenuts.powerplay.acme.drive.DriveConstants
 import org.thenuts.powerplay.acme.trajectorysequence.TrajectorySequenceBuilder
 import org.thenuts.powerplay.game.Alliance
 import org.thenuts.powerplay.game.Mode
 import org.thenuts.powerplay.game.Signal
 import org.thenuts.powerplay.opmode.CommandLinearOpMode
-import org.thenuts.powerplay.opmode.commands.OutputCommand
 import org.thenuts.powerplay.opmode.commands.go
 import org.thenuts.powerplay.subsystems.output.VerticalSlides
 import org.thenuts.powerplay.subsystems.October
-import org.thenuts.powerplay.subsystems.intake.LinkageSlides
 import org.thenuts.powerplay.subsystems.output.Output
-import org.thenuts.powerplay.subsystems.output.VerticalSlides.Companion.CONE_STEP
 import org.thenuts.switchboard.command.Command
 import org.thenuts.switchboard.command.CommandScheduler
-import org.thenuts.switchboard.command.combinator.SlotCommand
 import org.thenuts.switchboard.dsl.mkSequential
 import kotlin.math.PI
 import kotlin.time.Duration.Companion.milliseconds
@@ -30,21 +25,6 @@ abstract class CycleAuto(val right: Boolean) : CommandLinearOpMode<October>(::Oc
         bot.vision?.front?.startDebug()
         bot.vision?.signal?.enable()
         bot.vision?.gamepad = gamepad1
-    }
-
-    override fun stopHook() {
-        bot.vision?.front?.stopDebug()
-        bot.vision?.signal?.disable()
-    }
-
-    override fun initLoopHook() {
-        log.out["signal"] = bot.vision?.signal?.finalTarget
-    }
-
-    override fun postStartHook() {
-        bot.vision?.front?.stopDebug()
-        bot.vision?.signal?.disable()
-        bot.vision?.gamepad = null
 
         val reference = Pose2d(if (right) -36.0 else 36.0, 72.0, -PI/2.0)
 
@@ -60,67 +40,86 @@ abstract class CycleAuto(val right: Boolean) : CommandLinearOpMode<October>(::Oc
             else return Pose2d(x, y, heading)
         }
 
+        fun heading(heading: Double): Double {
+            if (REFERENCE)
+                return heading + reference.heading
+            else return heading
+        }
+
         val offset = 5.0
         val startPose = pose2d(0.0, offset, PI)
-        val intakePose = pose2d(52.5, if (right) -19.0 else 19.0, if (right) PI/2.0 else -PI/2.0)
-        val outputPose = pose2d(if (right) 48.5 else 47.5, if (right) 8.0 else -10.0, if (right) PI else PI)
+        var intakePose = pose2d(if (right) 51.5 else 49.5, if (right) -21.5 else 20.75, if (right) PI/2.0 else -PI/2.0)
+        var outputPose = pose2d(if (right) 49.5 else 49.5, if (right) 9.0 else -12.0, if (right) PI else PI)
+        val MIDDLE = if (right) PI/2.0 else -PI/2.0
+        val SIDE = if (right) -PI/2.0 else PI/2.0
 
         bot.drive.poseEstimate = startPose
         cmd = mkSequential {
 //            add(ExtendCommand(bot.output, scoreHeight, Output.OutputSide.SAMESIDE))
             task { bot.output.claw.state = Output.ClawState.CLOSED }
-            delay(500.milliseconds)
-            task { bot.output.arm.state = Output.ArmState.MAX_UP }
 //            delay(500.milliseconds)
 
             go(bot.drive, startPose) {
-                back(3.0)
-                if (right) {
-                    strafeRight(24.0 - offset)
-                    back(48.0)
-                } else {
-                    strafeLeft(24.0 + offset)
-                    back(48.0)
+                setTangent(0.0)
+                splineToConstantHeading(vec2d(3.0, offset), heading(-PI/2.0))
+//                back(3.0)
+                addDisplacementMarker {
+                    bot.output.arm.state = Output.ArmState.MAX_UP
                 }
-                strafeTo(outputPose.vec())
+//                if (right) {
+//                    strafeRight(24.0 - offset)
+//                    back(48.0)
+//                } else {
+//                    strafeLeft(24.0 + offset)
+//                    back(48.0)
+//                }
+//                strafeLeft(offset)
+                splineToConstantHeading(vec2d(8.0, 0.0), heading(0.0))
+                splineToConstantHeading(vec2d(52.0, 0.0), heading(0.0))
+                addDisplacementMarker {
+                    bot.output.lift.state =
+                        VerticalSlides.State.RunTo(VerticalSlides.Height.HIGH.pos)
+                }
+                splineToConstantHeading(outputPose.vec(), heading(MIDDLE))
             }
 
             fun output(height: Int) {
                 task {
                     bot.output.lift.state =
-                        VerticalSlides.State.RunTo(VerticalSlides.Height.HIGH.pos)
+                        VerticalSlides.State.RunTo(height)
                 }
                 await { !bot.output.lift.isBusy }
 //                delay(1000.milliseconds)
                 task { bot.output.arm.state = Output.ArmState.SAMESIDE_OUTPUT }
-                delay(1000.milliseconds)
-                task {
-                    bot.output.lift.state =
-                        VerticalSlides.State.RunTo(VerticalSlides.Height.MID.pos)
-                }
-                await { !bot.output.lift.isBusy }
-                task { bot.output.claw.state = Output.ClawState.OPEN }
                 delay(200.milliseconds)
+//                task {
+//                    bot.output.lift.state =
+//                        VerticalSlides.State.RunTo(VerticalSlides.Height.MID.pos)
+//                }
+//                await { !bot.output.lift.isBusy }
+                task { bot.output.claw.state = Output.ClawState.OPEN }
+                delay(100.milliseconds)
                 task { bot.output.arm.state = Output.ArmState.MAX_UP }
-                delay(1000.milliseconds)
-                task { bot.output.lift.state = VerticalSlides.State.RunTo(0) }
+                delay(200.milliseconds)
             }
 
             output(VerticalSlides.Height.HIGH.pos)
 
-            repeat(0) { i ->
+            repeat(2) { i ->
                 val stackHeight = 5 - i
 
                 go(bot.drive, outputPose) {
                     turnWrap(intakePose.heading - outputPose.heading)
                 }
 
-                task { bot.output.arm.state = Output.ArmState.values()[stackHeight - 1] }
+                task { bot.output.lift.state = VerticalSlides.State.RunTo(0) }
+                await { !bot.output.isBusy }
 
+                task { bot.output.arm.state = Output.ArmState.values()[stackHeight - 1] }
                 await { !bot.output.isBusy }
 
                 go(bot.drive, outputPose.copy(heading = intakePose.heading)) {
-                    lineTo(intakePose.vec())
+                    strafeTo(intakePose.vec())
                 }
 
                 task { bot.output.claw.state = Output.ClawState.CLOSED }
@@ -133,7 +132,8 @@ abstract class CycleAuto(val right: Boolean) : CommandLinearOpMode<October>(::Oc
 //                delay(1000.milliseconds)
 
                 go(bot.drive, intakePose) {
-                    lineTo(outputPose.vec())
+//                    lineToLinearHeading(outputPose)
+                    strafeTo(outputPose.vec())
                     turnWrap(outputPose.heading - intakePose.heading)
                 }
 
@@ -143,31 +143,50 @@ abstract class CycleAuto(val right: Boolean) : CommandLinearOpMode<October>(::Oc
             switch({ bot.vision!!.signal.finalTarget }) {
                 value(Signal.LEFT) {
                     go(bot.drive, outputPose) {
-                        strafeTo(vec2d(51.0, 0.0))
-                        forward(24.0)
-                        strafeRight(24.0)
+                        setTangent(heading(SIDE))
+                        splineToConstantHeading(vec2d(51.0, 0.0), SIDE)
+                        addDisplacementMarker { bot.output.lift.runTo(VerticalSlides.Height.MID.pos) }
+                        splineToConstantHeading(vec2d(32.0, 0.0), PI)
+                        splineToConstantHeading(vec2d(28.0, 26.0), PI/2.0)
                     }
                 }
                 value(Signal.MID) {
                     go(bot.drive, outputPose) {
-                        strafeTo(vec2d(51.0, 0.0))
-                        forward(12.0)
+                        setTangent(heading(SIDE))
+                        splineToConstantHeading(vec2d(51.0, 0.0), SIDE)
+                        addDisplacementMarker { bot.output.lift.runTo(VerticalSlides.Height.MID.pos) }
+                        splineToConstantHeading(vec2d(32.0, 0.0), PI)
                     }
-//                    go(bot.drive, Pose2d(26.0, 0.0, PI)) {
-//                        turnWrap(-PI)
-//                    }
                 }
                 value(Signal.RIGHT) {
                     go(bot.drive, outputPose) {
-                        strafeTo(vec2d(51.0, 0.0))
-                        forward(24.0)
-                        strafeLeft(24.0)
+                        setTangent(heading(SIDE))
+                        splineToConstantHeading(vec2d(51.0, 0.0), SIDE)
+                        addDisplacementMarker { bot.output.lift.runTo(VerticalSlides.Height.MID.pos) }
+                        splineToConstantHeading(vec2d(32.0, 0.0), PI)
+                        splineToConstantHeading(vec2d(28.0, -23.0), -PI/2.0)
                     }
                 }
             }
+            task { bot.output.lift.runTo(0) }
             delay(1000.milliseconds)
             task { stop() }
         }
+    }
+
+    override fun stopHook() {
+        bot.vision?.front?.stopDebug()
+        bot.vision?.signal?.disable()
+    }
+
+    override fun initLoopHook() {
+        log.out["signal"] = bot.vision?.signal?.finalTarget
+    }
+
+    override fun postStartHook() {
+        bot.vision?.front?.stopDebug()
+        bot.vision?.signal?.disable()
+        bot.vision?.gamepad = null
         sched.addCommand(cmd)
     }
 

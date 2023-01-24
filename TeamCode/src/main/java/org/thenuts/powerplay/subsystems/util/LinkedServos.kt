@@ -22,7 +22,7 @@ class LinkedServos(val first: Servo, val second: Servo, val zero: () -> Pair<Dou
     }
 
     override fun getWorstMean(): Duration {
-        return 2 * super.getWorstMean()
+        return first.getWorstMean() + second.getWorstMean();
     }
 
     operator fun Pair<Double, Double>.plus(that: Pair<Double, Double>) = this.first + that.first to this.second + that.second

@@ -5,13 +5,18 @@ import com.acmerobotics.roadrunner.control.PIDCoefficients
 import com.acmerobotics.roadrunner.control.PIDFController
 import com.qualcomm.robotcore.hardware.DcMotorSimple
 import org.thenuts.powerplay.subsystems.Subsystem
+import org.thenuts.powerplay.subsystems.util.TrapezoidalProfile
 import org.thenuts.switchboard.core.Logger
 import org.thenuts.switchboard.hardware.Configuration
 import org.thenuts.switchboard.hardware.Motor
 import org.thenuts.switchboard.hardware.MotorImpl
 import org.thenuts.switchboard.util.Frame
+import org.thenuts.switchboard.util.sinceJvmTime
 import kotlin.math.absoluteValue
 import kotlin.math.max
+import kotlin.math.roundToInt
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
 
 @Config
 class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
@@ -73,9 +78,35 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
         object IDLE : State()
         object ZERO : State()
         object FIND_EDGE : State()
-        data class RunTo(val pos: Int): State()
+        sealed class PID: State() {
+            abstract val pos: Int
+        }
+        data class RunTo(override val pos: Int): PID()
+        class Profiled(val profile: TrapezoidalProfile): PID() {
+            private var startTime: Duration? = null
+            override val pos: Int
+                get() {
+                    val now = Duration.sinceJvmTime()
+                    val s = startTime
+                    val t = if (s == null) {
+                        startTime = now
+                        0.0
+                    } else {
+                        (now - s).toDouble(DurationUnit.SECONDS)
+                    }
+                    return profile.position(t).roundToInt()
+                }
+        }
         data class Hold(val pos: Int, val isManual: Boolean): State()
         data class Manual(val velocity: Double): State()
+    }
+
+    fun profileTo(target: Int) {
+        state = State.Profiled(TrapezoidalProfile(getPosition().toDouble(), target.toDouble(), MAX_VEL, MAX_ACCEL))
+    }
+
+    fun runTo(target: Int) {
+        state = State.RunTo(target)
     }
 
     @Config
@@ -94,6 +125,7 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
                 State.FIND_EDGE -> true
                 is State.Manual -> true
                 is State.RunTo -> (state.pos - getPosition()).absoluteValue > BUSY_THRESHOLD
+                is State.Profiled -> (state.profile.end - getPosition()).absoluteValue > BUSY_THRESHOLD
 
                 is State.Hold -> state.isManual
 
@@ -178,7 +210,7 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
                     setPower(max(0.0, LIFT_KB + LIFT_KH * state.pos))
                 }
             }
-            is State.RunTo -> {
+            is State.PID -> {
                 setZpb(Motor.ZeroPowerBehavior.BRAKE)
                 runToController.targetPosition = state.pos.toDouble()
                 runToController.targetVelocity = 0.0
@@ -244,5 +276,8 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
         @JvmField var INSIDE_BOT = 260
         @JvmField var INSIDE_DROP_POWER = -0.25
         @JvmField var BOT_FRICTION = 0.1
+
+        @JvmField var MAX_ACCEL = 5000.0
+        @JvmField var MAX_VEL = 1000.0
     }
 }

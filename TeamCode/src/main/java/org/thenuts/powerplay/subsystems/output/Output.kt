@@ -5,11 +5,13 @@ import org.thenuts.powerplay.annotations.DiffField
 import org.thenuts.powerplay.subsystems.util.StatefulServo
 import org.thenuts.powerplay.subsystems.Subsystem
 import org.thenuts.powerplay.subsystems.util.LinkedServos
+import org.thenuts.powerplay.subsystems.util.TrapezoidalServo
 import org.thenuts.switchboard.command.Command
 import org.thenuts.switchboard.core.Logger
 import org.thenuts.switchboard.dsl.mkSequential
 import org.thenuts.switchboard.hardware.Configuration
 import org.thenuts.switchboard.hardware.HardwareOutput
+import org.thenuts.switchboard.util.Frame
 import java.util.*
 import kotlin.math.PI
 import kotlin.math.cos
@@ -19,10 +21,10 @@ import kotlin.time.Duration.Companion.seconds
 @Config
 class Output(val log: Logger, config: Configuration) : Subsystem {
     enum class ArmState(override val pos: Double) : StatefulServo.ServoPosition {
-        INTAKE(0.66), TWO(0.60), THREE(0.60), FOUR(0.60), FIVE(0.60),
-        PASSTHRU_OUTPUT(0.43), CLEAR(0.18), SAMESIDE_OUTPUT(0.43),
-        MAX_UP(0.1),
-        HORIZONTAL(0.6);
+        INTAKE(0.66), TWO(0.61), THREE(0.56), FOUR(0.51), FIVE(0.46),
+        PASSTHRU_OUTPUT(0.43), CLEAR(0.18), SAMESIDE_OUTPUT(0.28),
+        MAX_UP(0.15),
+        HORIZONTAL(0.43);
 
         fun offset(): Double = cos((pos - HORIZONTAL.pos) * SERVO_RANGE) * ARM_LENGTH
 
@@ -33,7 +35,7 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
     }
 
     enum class ClawState(override val pos: Double) : StatefulServo.ServoPosition {
-        WIDE(1.0), OPEN(1.0), CLOSED(0.5)
+        WIDE(1.0), OPEN(1.0), CLOSED(0.46)
     }
 
     enum class LiftState {
@@ -152,9 +154,18 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
     val leftArm = config.servos["left_output"]
     val rightArm = config.servos["right_output"]
 
-    val arm = StatefulServo(LinkedServos(leftArm, rightArm, { LEFT_BACK to RIGHT_BACK } , { LEFT_DOWN to RIGHT_DOWN }), ArmState.INTAKE)
+    val linkedServos = LinkedServos(leftArm, rightArm, { LEFT_BACK to RIGHT_BACK } , { LEFT_DOWN to RIGHT_DOWN }).also {
+        it.position = ArmState.INTAKE.pos
+    }
+    val profiledServo = TrapezoidalServo(linkedServos, { MAX_VEL }, { MAX_ACCEL })
+    val arm = StatefulServo(profiledServo, ArmState.INTAKE)
 
     override val outputs: List<HardwareOutput> = listOf(claw, leftArm, rightArm) + lift.outputs
+
+    override fun update(frame: Frame) {
+        log.out["arm target"] = profiledServo.profile?.position(profiledServo.time())
+        log.out["arm position"] = profiledServo.servo.position
+    }
 
     fun translate(our: LiftState): VerticalSlides.State = when (our) {
         LiftState.INTAKE -> {
@@ -179,7 +190,7 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
         }
 
     val isBusy: Boolean
-        get() = lift.isBusy || arm.isBusy // || claw.isBusy
+        get() = lift.isBusy || profiledServo.isBusy // || claw.isBusy
 
     fun transitionCommand(from: OutputState, to: OutputState): Command {
         val path = from.bfs(to)!!
@@ -223,5 +234,8 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
         @JvmField var RIGHT_DOWN = 0.0
 
         @JvmField var STEP = 0.05
+
+        @JvmField var MAX_ACCEL = 3.0
+        @JvmField var MAX_VEL = 10.0
     }
 }

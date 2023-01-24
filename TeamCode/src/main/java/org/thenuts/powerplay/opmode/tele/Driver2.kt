@@ -9,6 +9,7 @@ import org.thenuts.switchboard.command.combinator.SlotCommand
 import org.thenuts.switchboard.dsl.mkSequential
 import org.thenuts.switchboard.util.Frame
 import java.lang.Integer.max
+import kotlin.math.roundToInt
 
 class Driver2(val gamepad: Gamepad, val bot: October) : Command {
     override val done: Boolean = false
@@ -38,7 +39,12 @@ class Driver2(val gamepad: Gamepad, val bot: October) : Command {
 
     fun updateHeight() {
         outputSlot.interrupt(mkSequential {
-            task { bot.output.lift.state = VerticalSlides.State.RunTo(bot.output.outputHeight) }
+            task {
+                if (bot.output.outputHeight == 0)
+                    bot.output.lift.runTo(0)
+                else
+                    bot.output.lift.runTo(bot.output.outputHeight)
+            }
             await { !bot.output.isBusy }
         })
     }
@@ -61,7 +67,7 @@ class Driver2(val gamepad: Gamepad, val bot: October) : Command {
             bot.output.lift.state = VerticalSlides.State.Manual(-pad.right_stick_y.toDouble())
             bot.log.out["manual"] = -pad.right_stick_y.toDouble()
         } else if (prev.right_trigger > 0.5) {
-            bot.output.lift.state = VerticalSlides.State.RunTo(bot.output.lift.getPosition())
+            bot.output.lift.runTo(bot.output.lift.getPosition())
         }
 //
 //        val state = bot.manip.lift.state
@@ -135,11 +141,12 @@ class Driver2(val gamepad: Gamepad, val bot: October) : Command {
                 VerticalSlides.State.IDLE, VerticalSlides.State.ZERO, VerticalSlides.State.FIND_EDGE, is VerticalSlides.State.Manual -> 0
                 is VerticalSlides.State.RunTo -> liftState.pos
                 is VerticalSlides.State.Hold -> liftState.pos
+                is VerticalSlides.State.Profiled -> liftState.profile.end.roundToInt()
             }
             if (pad.dpad_up && !prev.dpad_up) {
-                bot.output.lift.state = VerticalSlides.State.RunTo(prevPos + VerticalSlides.CONE_STEP)
+                bot.output.lift.runTo(prevPos + VerticalSlides.CONE_STEP)
             } else if (pad.dpad_down && !prev.dpad_down) {
-                bot.output.lift.state = VerticalSlides.State.RunTo(max(0, prevPos - VerticalSlides.CONE_STEP))
+                bot.output.lift.runTo(max(0, prevPos - VerticalSlides.CONE_STEP))
             } else if (pad.dpad_left && !prev.dpad_left) {
                 intakeHeight = (intakeHeight - 1).coerceIn(1..5)
                 bot.output.arm.state = Output.ArmState.values()[intakeHeight - 1]
@@ -156,7 +163,7 @@ class Driver2(val gamepad: Gamepad, val bot: October) : Command {
 //                bot.output.lift.state = VerticalSlides.State.RunTo(VerticalSlides.Height.HIGH.pos)
             } else if (pad.dpad_left && !prev.dpad_left) {
                 outputSlot.interrupt(mkSequential {
-                    task { bot.output.lift.state = VerticalSlides.State.RunTo(0) }
+                    task { bot.output.lift.runTo(0) }
                     await { !bot.output.isBusy }
                     task { bot.output.arm.state = Output.ArmState.values()[intakeHeight - 1] }
                 })
@@ -197,8 +204,8 @@ class Driver2(val gamepad: Gamepad, val bot: October) : Command {
 //            interruptTo(Output.OutputState.GROUND)
             outputSlot.interrupt(mkSequential {
                 task { bot.output.claw.state = Output.ClawState.OPEN }
-                task { bot.output.arm.state = Output.ArmState.CLEAR }
-                task { bot.output.lift.state = VerticalSlides.State.RunTo(0) }
+//                task { bot.output.arm.state = Output.ArmState.CLEAR }
+                task { bot.output.lift.runTo(0) }
                 await { !bot.output.isBusy }
                 task { bot.output.arm.state = Output.ArmState.values()[intakeHeight - 1] }
             })

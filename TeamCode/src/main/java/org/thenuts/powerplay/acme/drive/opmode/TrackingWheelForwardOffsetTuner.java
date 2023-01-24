@@ -12,7 +12,7 @@ import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import org.thenuts.powerplay.acme.drive.SampleMecanumDrive;
-import org.thenuts.powerplay.acme.drive.StandardTrackingWheelLocalizer;
+import org.thenuts.powerplay.acme.drive.TwoOdo;
 
 /**
  * This routine determines the effective forward offset for the lateral tracking wheel.
@@ -46,7 +46,7 @@ public class TrackingWheelForwardOffsetTuner extends LinearOpMode {
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
-        if (!(drive.getLocalizer() instanceof StandardTrackingWheelLocalizer)) {
+        if (!(drive.getLocalizer() instanceof TwoOdo)) {
             RobotLog.setGlobalErrorMsg("StandardTrackingWheelLocalizer is not being set in the "
                     + "drive class. Ensure that \"setLocalizer(new StandardTrackingWheelLocalizer"
                     + "(hardwareMap));\" is called in SampleMecanumDrive.java");
@@ -82,7 +82,7 @@ public class TrackingWheelForwardOffsetTuner extends LinearOpMode {
                 drive.update();
             }
 
-            double forwardOffset = StandardTrackingWheelLocalizer.BACK_OFFSET +
+            double forwardOffset = TwoOdo.BACK_OFFSET +
                     drive.getPoseEstimate().getY() / headingAccumulator;
             forwardOffsetStats.add(forwardOffset);
 

@@ -18,7 +18,6 @@ import com.acmerobotics.roadrunner.trajectory.constraints.ProfileAccelerationCon
 import com.acmerobotics.roadrunner.trajectory.constraints.TrajectoryAccelerationConstraint;
 import com.acmerobotics.roadrunner.trajectory.constraints.TrajectoryVelocityConstraint;
 import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -27,14 +26,11 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.internal.opmode.TelemetryImpl;
 import org.thenuts.powerplay.acme.trajectorysequence.TrajectorySequence;
 import org.thenuts.powerplay.acme.trajectorysequence.TrajectorySequenceBuilder;
 import org.thenuts.powerplay.acme.trajectorysequence.TrajectorySequenceRunner;
 import org.thenuts.powerplay.acme.util.AxisDirection;
 import org.thenuts.powerplay.acme.util.BNO055IMUUtil;
-import org.thenuts.powerplay.acme.util.LynxModuleUtil;
 import org.thenuts.switchboard.command.Command;
 import org.thenuts.switchboard.util.Frame;
 
@@ -61,8 +57,8 @@ import kotlin.Pair;
  */
 @Config
 public class SampleMecanumDrive extends MecanumDrive implements Command {
-    public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(4, 0, 1);
-    public static PIDCoefficients HEADING_PID = new PIDCoefficients(5, 0, 0);
+    public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(11, 0, 1);
+    public static PIDCoefficients HEADING_PID = new PIDCoefficients(8, 0, 0);
 
     public static double LATERAL_MULTIPLIER = 1;
 
@@ -87,7 +83,7 @@ public class SampleMecanumDrive extends MecanumDrive implements Command {
         super(kV, kA, kStatic, TRACK_WIDTH, TRACK_WIDTH, LATERAL_MULTIPLIER);
 
         follower = new HolonomicPIDVAFollower(TRANSLATIONAL_PID, TRANSLATIONAL_PID, HEADING_PID,
-                new Pose2d(0.5, 0.5, Math.toRadians(1.0)), 0.5);
+                new Pose2d(0.5, 0.5, Math.toRadians(1.0)), 1.0);
 
 //        LynxModuleUtil.ensureMinimumFirmwareVersion(hardwareMap);
 
@@ -153,7 +149,8 @@ public class SampleMecanumDrive extends MecanumDrive implements Command {
         leftRear.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // TODO: if desired, use setLocalizer() to change the localization method
-        setLocalizer(new StandardTrackingWheelLocalizer(hardwareMap, imu));
+        setLocalizer(new TwoOdo(hardwareMap, imu));
+//        setLocalizer(new ThreeOdo(hardwareMap, imu));
 
         trajectorySequenceRunner = new TrajectorySequenceRunner(follower, HEADING_PID);
     }

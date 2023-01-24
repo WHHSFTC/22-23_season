@@ -20,6 +20,10 @@ class StatefulServo<T: StatefulServo.ServoPosition>(val servo: Servo, initial: T
         servo.output(all)
     }
 
+    override fun getWorstMean(): Duration {
+        return servo.getWorstMean()
+    }
+
 //    constructor(servo: Servo, initial: T): this(servo as ServoImplEx, initial)
     var state: T = initial
         set(value) {

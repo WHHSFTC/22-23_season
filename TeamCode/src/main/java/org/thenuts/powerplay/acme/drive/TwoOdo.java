@@ -1,10 +1,10 @@
 package org.thenuts.powerplay.acme.drive;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.acmerobotics.roadrunner.localization.ThreeTrackingWheelLocalizer;
 import com.acmerobotics.roadrunner.localization.TwoTrackingWheelLocalizer;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -29,7 +29,7 @@ import java.util.List;
  */
 @Config
 //public class StandardTrackingWheelLocalizer extends ThreeTrackingWheelLocalizer {
-public class StandardTrackingWheelLocalizer extends TwoTrackingWheelLocalizer {
+public class TwoOdo extends TwoTrackingWheelLocalizer {
     public static double TICKS_PER_REV = 8192;
     public static double WHEEL_RADIUS = 0.6889764; // in
     public static double GEAR_RATIO = 1; // output (wheel) speed / input (encoder) speed
@@ -42,10 +42,10 @@ public class StandardTrackingWheelLocalizer extends TwoTrackingWheelLocalizer {
     private BNO055IMU imu;
 
     // BACK IS INTAKE, FRONT IS OUTPUT
-    public StandardTrackingWheelLocalizer(HardwareMap hardwareMap, BNO055IMU imu) {
+    public TwoOdo(HardwareMap hardwareMap, BNO055IMU imu) {
         super(Arrays.asList(
-//                new Pose2d(0.82497, LATERAL_DISTANCE / 2, 0), // left
-                new Pose2d(0.82497, -LATERAL_DISTANCE / 2, 0), // right
+//                new Pose2d(0.82497-1.0, LATERAL_DISTANCE / 2, 0), // left
+                new Pose2d(0.82497-1.0, -LATERAL_DISTANCE / 2, 0), // right
                 new Pose2d(BACK_OFFSET, -0.02949, Math.toRadians(90)) // back
 //                new Pose2d(FRONT_OFFSET, -0.02949, Math.toRadians(90)) // front
         ));
@@ -82,15 +82,21 @@ public class StandardTrackingWheelLocalizer extends TwoTrackingWheelLocalizer {
         //  compensation method
 
         return Arrays.asList(
-//                encoderTicksToInches(leftEncoder.getRawVelocity()),
-                encoderTicksToInches(rightEncoder.getRawVelocity()),
-                encoderTicksToInches(backEncoder.getRawVelocity())
-//                encoderTicksToInches(frontEncoder.getCurrentPosition())
+//                encoderTicksToInches(leftEncoder.getCorrectedVelocity()),
+                encoderTicksToInches(rightEncoder.getCorrectedVelocity()),
+                encoderTicksToInches(backEncoder.getCorrectedVelocity())
+//                encoderTicksToInches(frontEncoder.getCorrectedVelocity())
         );
     }
 
     @Override
     public double getHeading() {
         return imu.getAngularOrientation().firstAngle;
+    }
+
+    @Nullable
+    @Override
+    public Double getHeadingVelocity() {
+        return (double) imu.getAngularVelocity().zRotationRate;
     }
 }
