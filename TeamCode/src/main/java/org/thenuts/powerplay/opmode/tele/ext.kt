@@ -11,3 +11,5 @@ fun Gamepad.safeCopy(that: Gamepad) {
         Log.e("TELE", "Gamepad copy resulted in error ${ex.localizedMessage}")
     }
 }
+
+fun Gamepad.shift() = right_trigger > 0.5 || left_trigger > 0.5

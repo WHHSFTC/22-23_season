@@ -220,5 +220,3 @@ class Driver2(val gamepad: Gamepad, val bot: October) : Command {
         @JvmField var SLIDES_DEADZONE = 0.05
     }
 }
-
-fun Gamepad.shift() = right_trigger > 0.5 || left_trigger > 0.5

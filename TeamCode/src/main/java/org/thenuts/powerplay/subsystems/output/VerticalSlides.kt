@@ -111,7 +111,7 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
 
     @Config
     enum class Height(@JvmField var pos: Int) {
-        INTAKE(0), MIN_CLEAR(0), ABOVE_STACK(500),
+        INTAKE(0), MIN_CLEAR(0), ABOVE_STACK(250),
 
         TERMINAL(38), GROUND(38),
         LOW(0), MID(390), HIGH(765);
