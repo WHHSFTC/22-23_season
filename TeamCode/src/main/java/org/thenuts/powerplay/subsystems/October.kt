@@ -1,5 +1,6 @@
 package org.thenuts.powerplay.subsystems
 
+import com.qualcomm.hardware.rev.Rev2mDistanceSensor
 import org.firstinspires.ftc.teamcode.opmode.vision.Vision
 import org.thenuts.powerplay.acme.drive.SampleMecanumDrive
 import org.thenuts.powerplay.game.Alliance
@@ -16,7 +17,8 @@ import kotlin.time.Duration.Companion.milliseconds
 class October(val log: Logger, val config: Configuration, val alliance: Alliance, val mode: Mode) : Robot() {
     val drive = SampleMecanumDrive(config.hwMap)
     val output = Output(log, config)
-    val intake = Intake(log, config)
+//    val intake = Intake(log, config)
+    val intake_dist = config.hwMap.get(Rev2mDistanceSensor::class.java, "intake_dist")
     val vision: Vision? = if (mode == Mode.AUTO) Vision(log, config, alliance) else null
 
     override val initCommands = listOf<Command>()

@@ -21,10 +21,10 @@ import kotlin.time.Duration.Companion.seconds
 @Config
 class Output(val log: Logger, config: Configuration) : Subsystem {
     enum class ArmState(override val pos: Double) : StatefulServo.ServoPosition {
-        INTAKE(0.66), TWO(0.61), THREE(0.56), FOUR(0.51), FIVE(0.46),
-        PASSTHRU_OUTPUT(0.43), CLEAR(0.18), SAMESIDE_OUTPUT(0.28),
-        MAX_UP(0.15),
-        HORIZONTAL(0.43);
+        INTAKE(0.70), TWO(0.65), THREE(0.60), FOUR(0.55), FIVE(0.50),
+        PASSTHRU_OUTPUT(0.47), CLEAR(0.22), SAMESIDE_OUTPUT(0.32),
+        MAX_UP(0.19),
+        HORIZONTAL(0.47);
 
         fun offset(): Double = cos((pos - HORIZONTAL.pos) * SERVO_RANGE) * ARM_LENGTH
 
@@ -35,7 +35,7 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
     }
 
     enum class ClawState(override val pos: Double) : StatefulServo.ServoPosition {
-        WIDE(1.0), OPEN(1.0), CLOSED(0.46)
+        WIDE(0.9), OPEN(0.9), CLOSED(0.63)
     }
 
     enum class LiftState {
@@ -228,10 +228,10 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
     }
 
     companion object {
-        @JvmField var LEFT_BACK = 0.0
-        @JvmField var LEFT_DOWN = 0.96
-        @JvmField var RIGHT_BACK = 0.96
-        @JvmField var RIGHT_DOWN = 0.0
+        @JvmField var LEFT_BACK = 0.02
+        @JvmField var LEFT_DOWN = 1.0
+        @JvmField var RIGHT_BACK = 0.985
+        @JvmField var RIGHT_DOWN = 0.02
 
         @JvmField var STEP = 0.05
 

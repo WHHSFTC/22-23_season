@@ -1,6 +1,8 @@
 package org.thenuts.powerplay.opmode.tele
 
+import com.acmerobotics.dashboard.config.Config
 import com.qualcomm.robotcore.hardware.Gamepad
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit
 import org.thenuts.powerplay.subsystems.output.VerticalSlides
 import org.thenuts.powerplay.subsystems.output.Output
 import org.thenuts.powerplay.subsystems.October
@@ -11,22 +13,21 @@ import org.thenuts.switchboard.util.Frame
 import java.lang.Integer.max
 import kotlin.math.roundToInt
 
-class Driver2(val gamepad: Gamepad, val bot: October) : Command {
+@Config
+class Driver2(val gamepad: Gamepad, val bot: October, val outputSlot: SlotCommand) : Command {
     override val done: Boolean = false
     val prev = Gamepad()
     val pad = Gamepad()
-    val outputSlot = SlotCommand()
 
-    override val postreqs = listOf(bot.output to 10, bot.output.lift to 10)
+    override val postreqs = listOf(bot.output to 10, bot.output.lift to 10, outputSlot to 10)
     var intakeHeight = 1
 
     override fun update(frame: Frame) {
         controls(frame)
-        outputSlot.update(frame)
     }
 
     override fun cleanup() {
-        outputSlot.cleanup()
+
     }
 
     fun queueTo(target: Output.OutputState) {
@@ -185,15 +186,25 @@ class Driver2(val gamepad: Gamepad, val bot: October) : Command {
         if (pad.b && !prev.b) {
 //            interruptTo(Output.OutputState.P_LOWER)
             outputSlot.interrupt(mkSequential {
-                task { bot.output.arm.state = Output.ArmState.PASSTHRU_OUTPUT }
-                await { !bot.output.isBusy }
-            })
-        } else if (pad.x && !prev.x) {
-//            interruptTo(Output.OutputState.S_LOWER)
-            outputSlot.interrupt(mkSequential {
                 task { bot.output.arm.state = Output.ArmState.SAMESIDE_OUTPUT }
                 await { !bot.output.isBusy }
             })
+        } else if (pad.x && false) {
+//            interruptTo(Output.OutputState.S_LOWER)
+//            outputSlot.interrupt(mkSequential {
+//                task { bot.output.arm.state = Output.ArmState.SAMESIDE_OUTPUT }
+//                await { !bot.output.isBusy }
+//            })
+            if ((!prev.x || frame.n % 4 == 0L) && bot.output.claw.state != Output.ClawState.CLOSED) {
+                val dist = bot.intake_dist.getDistance(DistanceUnit.INCH)
+                bot.log.out["intake_dist"] = dist
+                if (dist < CLAW_DIST)
+                    bot.output.claw.state = Output.ClawState.CLOSED
+//                    outputSlot.interrupt(mkSequential {
+//                        task { bot.output.arm.state = Output.ArmState.CLEAR }
+//                        await { !bot.output.isBusy }
+//                    })
+            }
         } else if (pad.y && !prev.y) {
 //            interruptTo(Output.OutputState.CLEAR)
             outputSlot.interrupt(mkSequential {
@@ -218,5 +229,6 @@ class Driver2(val gamepad: Gamepad, val bot: October) : Command {
 
     companion object {
         @JvmField var SLIDES_DEADZONE = 0.05
+        @JvmField var CLAW_DIST = 3.75
     }
 }

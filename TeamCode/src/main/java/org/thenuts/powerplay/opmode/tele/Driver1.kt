@@ -23,7 +23,7 @@ class Driver1(val gamepad: Gamepad, val bot: October) : Command {
 
     val intakeSlot = SlotCommand()
 
-    override val postreqs: List<Pair<Command, Int>> = listOf(bot.drive to 10, /* bot.intake to 10, */ bot.intake.slides to 10)
+    override val postreqs: List<Pair<Command, Int>> = listOf(bot.drive to 10, /* bot.intake to 10, */ /* bot.intake.slides to 10 */)
 
     override fun update(frame: Frame) {
         controls(frame)
