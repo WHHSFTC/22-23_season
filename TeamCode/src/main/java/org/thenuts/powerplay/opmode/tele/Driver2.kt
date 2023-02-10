@@ -104,7 +104,9 @@ class Driver2(val gamepad: Gamepad, val bot: October, val outputSlot: SlotComman
         } else if (pad.left_bumper && !prev.left_bumper) {
             // open claw
             outputSlot.interrupt(mkSequential {
-                task { bot.output.claw.state = Output.ClawState.OPEN }
+
+                task { bot.output.claw.state = if (bot.output.claw.state == Output.ClawState.OPEN) Output.ClawState.WIDE
+                else Output.ClawState.OPEN }
                 await { !bot.output.isBusy }
             })
 /*
@@ -189,13 +191,17 @@ class Driver2(val gamepad: Gamepad, val bot: October, val outputSlot: SlotComman
                 task { bot.output.arm.state = Output.ArmState.SAMESIDE_OUTPUT }
                 await { !bot.output.isBusy }
             })
-        } else if (pad.x && false) {
-//            interruptTo(Output.OutputState.S_LOWER)
-//            outputSlot.interrupt(mkSequential {
-//                task { bot.output.arm.state = Output.ArmState.SAMESIDE_OUTPUT }
-//                await { !bot.output.isBusy }
-//            })
-            if ((!prev.x || frame.n % 4 == 0L) && bot.output.claw.state != Output.ClawState.CLOSED) {
+        } else if (pad.x && !prev.x) {
+            interruptTo(Output.OutputState.S_LOWER)
+            outputSlot.interrupt(mkSequential {
+                task {
+                    bot.output.arm.state =
+                            if (bot.output.arm.state == Output.ArmState.PASSTHRU_HOVER) Output.ArmState.PASSTHRU_OUTPUT
+                            else Output.ArmState.PASSTHRU_HOVER
+                }
+                await { !bot.output.isBusy }
+            })
+            /*if ((!prev.x || frame.n % 4 == 0L) && bot.output.claw.state != Output.ClawState.CLOSED) {
                 val dist = bot.intake_dist.getDistance(DistanceUnit.INCH)
                 bot.log.out["intake_dist"] = dist
                 if (dist < CLAW_DIST)
@@ -204,7 +210,7 @@ class Driver2(val gamepad: Gamepad, val bot: October, val outputSlot: SlotComman
 //                        task { bot.output.arm.state = Output.ArmState.CLEAR }
 //                        await { !bot.output.isBusy }
 //                    })
-            }
+            }*/
         } else if (pad.y && !prev.y) {
 //            interruptTo(Output.OutputState.CLEAR)
             outputSlot.interrupt(mkSequential {
@@ -214,11 +220,14 @@ class Driver2(val gamepad: Gamepad, val bot: October, val outputSlot: SlotComman
         } else if (pad.a && !prev.a) {
 //            interruptTo(Output.OutputState.GROUND)
             outputSlot.interrupt(mkSequential {
-                task { bot.output.claw.state = Output.ClawState.OPEN }
-//                task { bot.output.arm.state = Output.ArmState.CLEAR }
+                if (bot.output.arm.state.pos < Output.ArmState.CLEAR.pos) {
+                    task { bot.output.arm.state = Output.ArmState.CLEAR }
+                    await { !bot.output.isBusy }
+                }
                 task { bot.output.lift.runTo(0) }
                 await { !bot.output.isBusy }
                 task { bot.output.arm.state = Output.ArmState.values()[intakeHeight - 1] }
+                task { bot.output.claw.state = Output.ClawState.WIDE }
             })
         }
 

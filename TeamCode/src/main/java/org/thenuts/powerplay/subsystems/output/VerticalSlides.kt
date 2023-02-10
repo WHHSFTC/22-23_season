@@ -56,11 +56,11 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
 
     val motor1 = config.motors["slides1"].also {
         it.zpb = Motor.ZeroPowerBehavior.BRAKE
-        (it as MotorImpl).m.direction = DcMotorSimple.Direction.REVERSE
+        (it as? MotorImpl)?.m?.direction = DcMotorSimple.Direction.REVERSE
     }
     val motor2 = config.motors["slides2"].also {
         it.zpb = Motor.ZeroPowerBehavior.BRAKE
-//        (it as MotorImpl).m.direction = DcMotorSimple.Direction.REVERSE
+//        (it as? MotorImpl)?.m?.direction = DcMotorSimple.Direction.REVERSE
     }
 
     val leftSwitch = config.touchSensors["leftLimit"]
@@ -114,7 +114,7 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
         INTAKE(0), MIN_CLEAR(0), ABOVE_STACK(250),
 
         TERMINAL(38), GROUND(38),
-        LOW(0), MID(390), HIGH(765);
+        LOW(0), MID(335), HIGH(675);
     }
 
     val isBusy: Boolean
@@ -227,7 +227,10 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
                 if (position < INSIDE_BOT) {
                     if (power > 0.0)
                         power += BOT_FRICTION
-                    else power = max(INSIDE_DROP_POWER, power)
+                    else {
+                        power = max(INSIDE_DROP_POWER, power)
+                        //setZpb(INSIDE_DROP_MODE)
+                    }
                 }
                 setPower(power)
             }
@@ -252,19 +255,20 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
 //        @JvmField var MAX_SLIDES_DOWN = 0.1
 
         @JvmField var LIFT_RUN_TO_PID = PIDCoefficients(
-            kP = 0.005,
+            kP = 0.01,
+            kD = 0.00008
         )
         @JvmField var LIFT_KV = 1.0
         @JvmField var LIFT_KA = 0.0
 
         @JvmField var LIFT_KS = 0.0
         @JvmField var LIFT_KB = 0.0
-        @JvmField var LIFT_KH = 0.0002
+        @JvmField var LIFT_KH = 0.00045
 
         @JvmField var TOLERANCE = 200
 
         @JvmField var BRAKE_HEIGHT = 0
-        @JvmField var DROP_POWER = -0.5
+        @JvmField var DROP_POWER = -0.30
         @JvmField var EDGE_POWER = 0.25
 
         @JvmField var MAX_DIFF = 200
@@ -274,7 +278,8 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
         @JvmField var BUSY_THRESHOLD = 150
 
         @JvmField var INSIDE_BOT = 260
-        @JvmField var INSIDE_DROP_POWER = -0.25
+        @JvmField var INSIDE_DROP_POWER = -0.10
+        //@JvmField var INSIDE_DROP_MODE = Motor.ZeroPowerBehavior.BRAKE
         @JvmField var BOT_FRICTION = 0.1
 
         @JvmField var MAX_ACCEL = 5000.0

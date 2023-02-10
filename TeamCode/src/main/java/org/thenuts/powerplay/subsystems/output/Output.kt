@@ -1,6 +1,8 @@
 package org.thenuts.powerplay.subsystems.output
 
 import com.acmerobotics.dashboard.config.Config
+import com.qualcomm.robotcore.hardware.PwmControl
+import com.qualcomm.robotcore.hardware.ServoImplEx
 import org.thenuts.powerplay.annotations.DiffField
 import org.thenuts.powerplay.subsystems.util.StatefulServo
 import org.thenuts.powerplay.subsystems.Subsystem
@@ -11,6 +13,7 @@ import org.thenuts.switchboard.core.Logger
 import org.thenuts.switchboard.dsl.mkSequential
 import org.thenuts.switchboard.hardware.Configuration
 import org.thenuts.switchboard.hardware.HardwareOutput
+import org.thenuts.switchboard.hardware.ServoImpl
 import org.thenuts.switchboard.util.Frame
 import java.util.*
 import kotlin.math.PI
@@ -21,21 +24,22 @@ import kotlin.time.Duration.Companion.seconds
 @Config
 class Output(val log: Logger, config: Configuration) : Subsystem {
     enum class ArmState(override val pos: Double) : StatefulServo.ServoPosition {
-        INTAKE(0.70), TWO(0.65), THREE(0.60), FOUR(0.55), FIVE(0.50),
-        PASSTHRU_OUTPUT(0.47), CLEAR(0.22), SAMESIDE_OUTPUT(0.32),
-        MAX_UP(0.19),
-        HORIZONTAL(0.47);
+        INTAKE(1.0), TWO(0.972), THREE(0.944), FOUR(0.916), FIVE(0.888),
+        PASSTHRU_OUTPUT(0.25), PASSTHRU_HOVER(0.40), CLEAR(0.70), SAMESIDE_HOVER(0.80), SAMESIDE_OUTPUT(0.80
+        ),
+        MAX_UP(0.70),
+        HORIZONTAL(0.85);
 
         fun offset(): Double = cos((pos - HORIZONTAL.pos) * SERVO_RANGE) * ARM_LENGTH
 
         companion object {
-            val SERVO_RANGE = 160.0/180.0 * PI
+            val SERVO_RANGE = 300.0/180.0 * PI
             val ARM_LENGTH = 11.12205
         }
     }
 
     enum class ClawState(override val pos: Double) : StatefulServo.ServoPosition {
-        WIDE(0.9), OPEN(0.9), CLOSED(0.63)
+        WIDE(0.9), OPEN(0.65), CLOSED(0.55), JUNCTION(0.65)
     }
 
     enum class LiftState {
@@ -47,7 +51,7 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
             OutputState.GROUND,
             OutputState.INTAKE,
             OutputState.CLEAR,
-            OutputState.S_OUTPUT,
+            OutputState.S_HOVER,
             OutputState.S_LOWER,
             OutputState.S_DROP
         ),
@@ -56,7 +60,7 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
             OutputState.GROUND,
             OutputState.INTAKE,
             OutputState.CLEAR,
-            OutputState.P_OUTPUT,
+            OutputState.P_HOVER,
             OutputState.P_LOWER,
             OutputState.P_DROP
         );
@@ -72,16 +76,19 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
         GROUND(LiftState.INTAKE, ArmState.INTAKE, ClawState.WIDE),
         INTAKE(LiftState.INTAKE, ArmState.INTAKE, ClawState.CLOSED),
 
+        CLEAR_LOW(LiftState.INTAKE, ArmState.CLEAR, ClawState.CLOSED),
+
         CLEAR(LiftState.CLEAR, ArmState.CLEAR, ClawState.CLOSED),
         CLEAR_OPEN(LiftState.CLEAR, ArmState.CLEAR, ClawState.OPEN),
 
-        S_OUTPUT(LiftState.OUTPUT, ArmState.CLEAR, ClawState.CLOSED),
+        S_HOVER(LiftState.OUTPUT, ArmState.SAMESIDE_HOVER, ClawState.CLOSED),
         S_LOWER(LiftState.OUTPUT, ArmState.SAMESIDE_OUTPUT, ClawState.CLOSED),
-        S_DROP(LiftState.OUTPUT, ArmState.SAMESIDE_OUTPUT, ClawState.OPEN),
+        S_DROP(LiftState.OUTPUT, ArmState.SAMESIDE_OUTPUT, ClawState.WIDE),
 
-        P_OUTPUT(LiftState.OUTPUT, ArmState.CLEAR, ClawState.CLOSED),
+        P_HOVER(LiftState.OUTPUT, ArmState.PASSTHRU_HOVER, ClawState.CLOSED),
         P_LOWER(LiftState.OUTPUT, ArmState.PASSTHRU_OUTPUT, ClawState.CLOSED),
-        P_DROP(LiftState.OUTPUT, ArmState.PASSTHRU_OUTPUT, ClawState.OPEN);
+        P_DROP(LiftState.OUTPUT, ArmState.PASSTHRU_OUTPUT, ClawState.OPEN),
+        P_JUNCTION(LiftState.OUTPUT, ArmState.PASSTHRU_OUTPUT, ClawState.JUNCTION);
 //
 //        BACK_CLOSED(LiftState.INTAKE, ExtensionState.BACK, ClawState.CLOSED),
 //        BACK_INTAKE(LiftState.INTAKE, ExtensionState.BACK, ClawState.OPEN);
@@ -101,18 +108,21 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
         fun legalMoves(): List<OutputState> {
             return when (this) {
                 GROUND -> listOf(INTAKE)
-                INTAKE -> listOf(GROUND, CLEAR, S_OUTPUT, P_OUTPUT)
+                INTAKE -> listOf(GROUND, CLEAR_LOW)
 
-                CLEAR -> listOf(INTAKE, S_OUTPUT, P_OUTPUT, CLEAR_OPEN)
-                CLEAR_OPEN -> listOf(CLEAR)
+                CLEAR_LOW -> listOf(INTAKE, CLEAR)
 
-                S_OUTPUT -> listOf(CLEAR, S_LOWER, INTAKE)
-                S_LOWER -> listOf(S_OUTPUT, S_DROP, INTAKE)
-                S_DROP -> listOf(S_LOWER)
+                CLEAR -> listOf(CLEAR_LOW, S_HOVER, P_HOVER, CLEAR_OPEN)
+                CLEAR_OPEN -> listOf(CLEAR, CLEAR_LOW)
 
-                P_OUTPUT -> listOf(CLEAR, P_LOWER, INTAKE)
-                P_LOWER -> listOf(P_OUTPUT, P_DROP, INTAKE)
-                P_DROP -> listOf(P_LOWER)
+                S_HOVER -> listOf(CLEAR, S_LOWER, INTAKE)
+                S_LOWER -> listOf(S_HOVER, S_DROP, INTAKE)
+                S_DROP -> listOf(CLEAR_OPEN, CLEAR, S_LOWER)
+
+                P_HOVER -> listOf(CLEAR, P_LOWER, INTAKE)
+                P_LOWER -> listOf(P_HOVER, P_DROP, INTAKE)
+                P_DROP -> listOf(P_LOWER, P_JUNCTION)
+                P_JUNCTION -> listOf(CLEAR_OPEN)
             }
         }
 
@@ -151,8 +161,12 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
     val lift = VerticalSlides(log, config)
     val claw = StatefulServo(config.servos["claw_output"], ClawState.WIDE)
 
-    val leftArm = config.servos["left_output"]
-    val rightArm = config.servos["right_output"]
+    val leftArm = config.servos["left_output"].also {
+        ((it as? ServoImpl)?.s as? ServoImplEx)?.pwmRange =PwmControl.PwmRange(500.0,2500.0)
+    }
+    val rightArm = config.servos["right_output"].also {
+        ((it as? ServoImpl)?.s as? ServoImplEx)?.pwmRange =PwmControl.PwmRange(500.0,2500.0)
+    }
 
     val linkedServos = LinkedServos(leftArm, rightArm, { LEFT_BACK to RIGHT_BACK } , { LEFT_DOWN to RIGHT_DOWN }).also {
         it.position = ArmState.INTAKE.pos
@@ -228,12 +242,11 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
     }
 
     companion object {
-        @JvmField var LEFT_BACK = 0.02
+        @JvmField var LEFT_BACK = 0.00
         @JvmField var LEFT_DOWN = 1.0
-        @JvmField var RIGHT_BACK = 0.985
-        @JvmField var RIGHT_DOWN = 0.02
-
-        @JvmField var STEP = 0.05
+        @JvmField var RIGHT_BACK = 1.0
+        @JvmField var RIGHT_DOWN = 0.00
+        @JvmField var STEP = 0.028
 
         @JvmField var MAX_ACCEL = 3.0
         @JvmField var MAX_VEL = 10.0

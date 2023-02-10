@@ -18,7 +18,7 @@ import org.thenuts.switchboard.dsl.mkSequential
 import kotlin.math.PI
 import kotlin.time.Duration.Companion.milliseconds
 
-abstract class CycleAuto(val right: Boolean) : CommandLinearOpMode<October>(::October, Alliance.RED, Mode.AUTO) {
+abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(::October, Alliance.RED, Mode.AUTO) {
     lateinit var cmd: Command
 
     override fun postInitHook() {
@@ -49,7 +49,7 @@ abstract class CycleAuto(val right: Boolean) : CommandLinearOpMode<October>(::Oc
         val offset = 5.0
         val startPose = pose2d(0.0, offset, PI)
         var intakePose = pose2d(if (right) 52.5 else 52.5, if (right) -21.0 else 20.25, if (right) PI/2.0 else -PI/2.0)
-        var outputPose = pose2d(if (right) 48.5 else 48.5, if (right) 11.0 else -12.0, if (right) PI else PI)
+        var outputPose = pose2d(if (right) 48.5 else 50.5, if (right) 11.0 else -12.0, if (right) PI else PI)
         val MIDDLE = if (right) PI/2.0 else -PI/2.0
         val SIDE = if (right) -PI/2.0 else PI/2.0
         val cycleOffset = if (right)
@@ -92,18 +92,19 @@ abstract class CycleAuto(val right: Boolean) : CommandLinearOpMode<October>(::Oc
                     bot.output.lift.state =
                         VerticalSlides.State.RunTo(height)
                 }
+                task { bot.output.arm.state = Output.ArmState.CLEAR }
                 await { !bot.output.lift.isBusy }
 //                delay(1000.milliseconds)
-                task { bot.output.arm.state = Output.ArmState.SAMESIDE_OUTPUT }
-                delay(200.milliseconds)
+                task { bot.output.arm.state = Output.ArmState.PASSTHRU_OUTPUT }
+                delay(300.milliseconds)
 //                task {
 //                    bot.output.lift.state =
 //                        VerticalSlides.State.RunTo(VerticalSlides.Height.MID.pos)
 //                }
 //                await { !bot.output.lift.isBusy }
-                task { bot.output.claw.state = Output.ClawState.WIDE }
-                delay(100.milliseconds)
-                task { bot.output.arm.state = Output.ArmState.MAX_UP }
+                task { bot.output.claw.state = Output.ClawState.OPEN }
+                delay(150.milliseconds)
+                task { bot.output.arm.state = Output.ArmState.CLEAR }
                 delay(200.milliseconds)
             }
 
@@ -111,10 +112,10 @@ abstract class CycleAuto(val right: Boolean) : CommandLinearOpMode<October>(::Oc
 
             repeat(2) { i ->
                 val stackHeight = 5 - i
-
-                go(bot.drive, outputPose) {
-                    turnWrap(intakePose.heading - outputPose.heading)
-                }
+//
+//                go(bot.drive, outputPose) {
+//                    turnWrap(intakePose.heading - outputPose.heading)
+//                }
 
                 task { bot.output.lift.state = VerticalSlides.State.RunTo(0) }
                 await { !bot.output.isBusy }
@@ -122,8 +123,9 @@ abstract class CycleAuto(val right: Boolean) : CommandLinearOpMode<October>(::Oc
                 task { bot.output.arm.state = Output.ArmState.values()[stackHeight - 1] }
                 await { !bot.output.isBusy }
 
-                go(bot.drive, outputPose.copy(heading = intakePose.heading)) {
-                    strafeTo(intakePose.vec())
+                go(bot.drive, outputPose/*.copy(heading = intakePose.heading)*/) {
+                    setTangent((outputPose.heading + PI).angleWrap())
+                    splineTo(intakePose.vec(), heading(SIDE))
                 }
 
                 task { bot.output.claw.state = Output.ClawState.CLOSED }
@@ -136,7 +138,8 @@ abstract class CycleAuto(val right: Boolean) : CommandLinearOpMode<October>(::Oc
 
                 go(bot.drive, intakePose) {
 //                    lineToLinearHeading(outputPose)
-                    strafeTo(outputPose.vec())
+                    setTangent(heading(SIDE))
+                    splineTo(outputPose.vec(), outputPose.heading)
                     turnWrap(outputPose.heading - intakePose.heading)
                 }
 
@@ -209,7 +212,7 @@ abstract class CycleAuto(val right: Boolean) : CommandLinearOpMode<October>(::Oc
 }
 
 @Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
-class LeftCycleAuto : CycleAuto(false)
+class LeftPassthruAuto : PassthruAuto(false)
 
 @Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
-class RightCycleAuto : CycleAuto(true)
+class RightPassthruAuto : PassthruAuto(true)
