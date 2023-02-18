@@ -114,7 +114,7 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
         INTAKE(0), MIN_CLEAR(0), ABOVE_STACK(250),
 
         TERMINAL(38), GROUND(38),
-        LOW(0), MID(335), HIGH(675);
+        LOW(0), MID(335), HIGH(690);
     }
 
     val isBusy: Boolean
@@ -215,9 +215,13 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
                 runToController.targetPosition = state.pos.toDouble()
                 runToController.targetVelocity = 0.0
                 runToController.targetAcceleration = 0.0
-                val position = getPosition()
+                val position = getPosition().toDouble()
+                var roundedPosition = position
+                if (position < INSIDE_BOT && (position - state.pos.toDouble()).absoluteValue < SAME_THRESHOLD) {
+                    roundedPosition = state.pos.toDouble()
+                }
                 val output = runToController.update(
-                    measuredPosition = position.toDouble(),
+                    measuredPosition = roundedPosition,
                 )
                 log.out["slides target"] = state.pos
                 log.out["slides position"] = position
@@ -265,7 +269,7 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
         @JvmField var LIFT_KB = 0.0
         @JvmField var LIFT_KH = 0.00045
 
-        @JvmField var TOLERANCE = 200
+        @JvmField var SAME_THRESHOLD = 10
 
         @JvmField var BRAKE_HEIGHT = 0
         @JvmField var DROP_POWER = -0.30

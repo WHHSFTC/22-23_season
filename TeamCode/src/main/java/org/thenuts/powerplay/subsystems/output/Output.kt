@@ -24,10 +24,12 @@ import kotlin.time.Duration.Companion.seconds
 @Config
 class Output(val log: Logger, config: Configuration) : Subsystem {
     enum class ArmState(override val pos: Double) : StatefulServo.ServoPosition {
+        // first five positions in order for stack intake
         INTAKE(1.0), TWO(0.972), THREE(0.944), FOUR(0.916), FIVE(0.888),
-        PASSTHRU_OUTPUT(0.25), PASSTHRU_HOVER(0.40), CLEAR(0.70), SAMESIDE_HOVER(0.80), SAMESIDE_OUTPUT(0.80
-        ),
-        MAX_UP(0.70),
+        PASSTHRU_OUTPUT(0.25), PASSTHRU_HOVER(0.35),
+        CLEAR(0.70),
+        SAMESIDE_HOVER(0.80), SAMESIDE_OUTPUT(0.80),
+        MAX_UP(0.60),
         HORIZONTAL(0.85);
 
         fun offset(): Double = cos((pos - HORIZONTAL.pos) * SERVO_RANGE) * ARM_LENGTH
@@ -39,7 +41,7 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
     }
 
     enum class ClawState(override val pos: Double) : StatefulServo.ServoPosition {
-        WIDE(0.9), OPEN(0.65), CLOSED(0.55), JUNCTION(0.65)
+        WIDE(0.87), OPEN(0.68), CLOSED(0.55), JUNCTION(0.65)
     }
 
     enum class LiftState {

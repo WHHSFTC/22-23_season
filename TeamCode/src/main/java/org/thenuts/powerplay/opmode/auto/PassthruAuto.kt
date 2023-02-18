@@ -3,7 +3,7 @@ package org.thenuts.powerplay.opmode.auto
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.geometry.Vector2d
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
-import org.thenuts.powerplay.acme.trajectorysequence.TrajectorySequenceBuilder
+import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import org.thenuts.powerplay.game.Alliance
 import org.thenuts.powerplay.game.Mode
 import org.thenuts.powerplay.game.Signal
@@ -48,14 +48,15 @@ abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(:
 
         val offset = 5.0
         val startPose = pose2d(0.0, offset, PI)
-        var intakePose = pose2d(if (right) 52.5 else 52.5, if (right) -21.0 else 20.25, if (right) PI/2.0 else -PI/2.0)
-        var outputPose = pose2d(if (right) 48.5 else 50.5, if (right) 11.0 else -12.0, if (right) PI else PI)
+        var intakePose = pose2d(if (right) 52.5 else 50.0, if (right) -20.25 else 21.5, if (right) PI/2.0 else -PI/2.0)
+        var samesidePose = pose2d(if (right) 48.5 else 48.5, if (right) 11.0 else -12.75, if (right) PI else PI)
+        var passthruPose = pose2d(if (right) 48.5 else 57.0, if (right) 11.0 else -6.0, if (right) PI else -PI/4.0)
         val MIDDLE = if (right) PI/2.0 else -PI/2.0
         val SIDE = if (right) -PI/2.0 else PI/2.0
         val cycleOffset = if (right)
             pose2d(0.0, 0.0, 0.0)
         else
-            pose2d(0.0, 2.75, 0.0)
+            pose2d(-0.75, 0.0, 0.0)
 
         bot.drive.poseEstimate = startPose
         cmd = mkSequential {
@@ -84,18 +85,38 @@ abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(:
                     bot.output.lift.state =
                         VerticalSlides.State.RunTo(VerticalSlides.Height.HIGH.pos)
                 }
-                splineToConstantHeading(outputPose.vec(), heading(MIDDLE))
+                splineToConstantHeading(samesidePose.vec(), heading(MIDDLE))
             }
 
-            fun output(height: Int) {
+            fun samesideOutput(height: Int) {
                 task {
                     bot.output.lift.state =
                         VerticalSlides.State.RunTo(height)
                 }
                 task { bot.output.arm.state = Output.ArmState.CLEAR }
-                await { !bot.output.lift.isBusy }
+                await { !bot.output.isBusy }
 //                delay(1000.milliseconds)
-                task { bot.output.arm.state = Output.ArmState.PASSTHRU_OUTPUT }
+                task { bot.output.arm.state = Output.ArmState.SAMESIDE_OUTPUT }
+                delay(200.milliseconds)
+//                task {
+//                    bot.output.lift.state =
+//                        VerticalSlides.State.RunTo(VerticalSlides.Height.MID.pos)
+//                }
+//                await { !bot.output.lift.isBusy }
+                task { bot.output.claw.state = Output.ClawState.WIDE }
+                delay(100.milliseconds)
+                task { bot.output.arm.state = Output.ArmState.CLEAR }
+                delay(200.milliseconds)
+            }
+
+            fun passthruOutput(height: Int) {
+                task {
+                    bot.output.lift.state =
+                        VerticalSlides.State.RunTo(height)
+                }
+                task { bot.output.arm.state = Output.ArmState.PASSTHRU_HOVER }
+                await { !bot.output.isBusy }
+//                delay(1000.milliseconds)
                 delay(300.milliseconds)
 //                task {
 //                    bot.output.lift.state =
@@ -103,57 +124,70 @@ abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(:
 //                }
 //                await { !bot.output.lift.isBusy }
                 task { bot.output.claw.state = Output.ClawState.OPEN }
-                delay(150.milliseconds)
+                delay(300.milliseconds)
+                task { bot.output.claw.state = Output.ClawState.CLOSED }
+                delay(100.milliseconds)
                 task { bot.output.arm.state = Output.ArmState.CLEAR }
-                delay(200.milliseconds)
+                delay(400.milliseconds)
             }
 
-            output(VerticalSlides.Height.HIGH.pos)
+            samesideOutput(VerticalSlides.Height.HIGH.pos)
 
-            repeat(2) { i ->
+            repeat(3) { i ->
                 val stackHeight = 5 - i
-//
-//                go(bot.drive, outputPose) {
-//                    turnWrap(intakePose.heading - outputPose.heading)
-//                }
+
+                if (i == 0) {
+                    go(bot.drive, samesidePose) {
+                        turnWrap(intakePose.heading - samesidePose.heading)
+                    }
+                }
 
                 task { bot.output.lift.state = VerticalSlides.State.RunTo(0) }
-                await { !bot.output.isBusy }
+//                await { !bot.output.isBusy }
 
                 task { bot.output.arm.state = Output.ArmState.values()[stackHeight - 1] }
-                await { !bot.output.isBusy }
+                task { bot.output.claw.state = Output.ClawState.WIDE }
+//                await { !bot.output.isBusy }
 
-                go(bot.drive, outputPose/*.copy(heading = intakePose.heading)*/) {
-                    setTangent((outputPose.heading + PI).angleWrap())
-                    splineTo(intakePose.vec(), heading(SIDE))
+                if (i == 0) {
+                    go(bot.drive, samesidePose.copy(heading = intakePose.heading)) {
+//                        setTangent((passthruPose.heading + PI).angleWrap())
+                        strafeTo(intakePose.vec())
+                    }
+                } else {
+                    go(bot.drive, passthruPose) {
+//                        setTangent((passthruPose.heading + PI).angleWrap())
+                        setReversed(true)
+                        splineTo(intakePose.vec(), heading(SIDE))
+                    }
                 }
 
                 task { bot.output.claw.state = Output.ClawState.CLOSED }
-                delay(500.milliseconds)
+                delay(300.milliseconds)
 
                 task { bot.output.lift.state = VerticalSlides.State.RunTo(VerticalSlides.Height.ABOVE_STACK.pos) }
                 await { !bot.output.lift.isBusy }
-                task { bot.output.arm.state = Output.ArmState.MAX_UP }
+                task { bot.output.arm.state = Output.ArmState.CLEAR }
 
 
                 go(bot.drive, intakePose) {
 //                    lineToLinearHeading(outputPose)
-                    setTangent(heading(SIDE))
-                    splineTo(outputPose.vec(), outputPose.heading)
-                    turnWrap(outputPose.heading - intakePose.heading)
+                    setTangent(heading(MIDDLE))
+                    splineTo(passthruPose.vec(), passthruPose.heading)
+//                    turnWrap(passthruPose.heading - intakePose.heading)
                 }
 
                 intakePose += cycleOffset
-                outputPose += cycleOffset
+                passthruPose += cycleOffset
+                samesidePose += cycleOffset
 
-
-                output(VerticalSlides.Height.HIGH.pos)
+                passthruOutput(VerticalSlides.Height.HIGH.pos)
             }
 
             switch({ bot.vision!!.signal.finalTarget }) {
                 value(Signal.LEFT) {
-                    go(bot.drive, outputPose) {
-                        setTangent(heading(SIDE))
+                    go(bot.drive, passthruPose) {
+                        setReversed(true)
                         splineToConstantHeading(vec2d(51.0, 0.0), SIDE)
                         addDisplacementMarker { bot.output.lift.runTo(VerticalSlides.Height.MID.pos) }
                         splineToConstantHeading(vec2d(32.0, 0.0), PI)
@@ -162,16 +196,16 @@ abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(:
                     }
                 }
                 value(Signal.MID) {
-                    go(bot.drive, outputPose) {
-                        setTangent(heading(SIDE))
+                    go(bot.drive, passthruPose) {
+                        setReversed(true)
                         splineToConstantHeading(vec2d(51.0, 0.0), SIDE)
                         addDisplacementMarker { bot.output.lift.runTo(VerticalSlides.Height.MID.pos) }
                         splineToConstantHeading(vec2d(35.0, 0.0), PI)
                     }
                 }
                 value(Signal.RIGHT) {
-                    go(bot.drive, outputPose) {
-                        setTangent(heading(SIDE))
+                    go(bot.drive, passthruPose) {
+                        setReversed(true)
                         splineToConstantHeading(vec2d(51.0, 0.0), SIDE)
                         addDisplacementMarker { bot.output.lift.runTo(VerticalSlides.Height.MID.pos) }
                         splineToConstantHeading(vec2d(32.0, 0.0), PI)

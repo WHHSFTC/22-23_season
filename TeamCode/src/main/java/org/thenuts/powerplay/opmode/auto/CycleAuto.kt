@@ -48,14 +48,14 @@ abstract class CycleAuto(val right: Boolean) : CommandLinearOpMode<October>(::Oc
 
         val offset = 5.0
         val startPose = pose2d(0.0, offset, PI)
-        var intakePose = pose2d(if (right) 52.5 else 52.5, if (right) -21.0 else 20.25, if (right) PI/2.0 else -PI/2.0)
-        var outputPose = pose2d(if (right) 48.5 else 48.5, if (right) 11.0 else -12.0, if (right) PI else PI)
+        var intakePose = pose2d(if (right) 52.5 else 51.0, if (right) -20.25 else 20.12, if (right) PI/2.0 else -PI/2.0)
+        var outputPose = pose2d(if (right) 48.5 else 48.5, if (right) 11.0 else -12.75, if (right) PI else PI)
         val MIDDLE = if (right) PI/2.0 else -PI/2.0
         val SIDE = if (right) -PI/2.0 else PI/2.0
         val cycleOffset = if (right)
             pose2d(0.0, 0.0, 0.0)
         else
-            pose2d(0.0, 2.75, 0.0)
+            pose2d(0.0, 2.5, 0.0)
 
         bot.drive.poseEstimate = startPose
         cmd = mkSequential {
@@ -68,7 +68,7 @@ abstract class CycleAuto(val right: Boolean) : CommandLinearOpMode<October>(::Oc
                 splineToConstantHeading(vec2d(3.0, offset/2.0), heading(-PI/4.0))
 //                back(3.0)
                 addDisplacementMarker {
-                    bot.output.arm.state = Output.ArmState.MAX_UP
+                    bot.output.arm.state = Output.ArmState.CLEAR
                 }
 //                if (right) {
 //                    strafeRight(24.0 - offset)
@@ -103,7 +103,7 @@ abstract class CycleAuto(val right: Boolean) : CommandLinearOpMode<October>(::Oc
 //                await { !bot.output.lift.isBusy }
                 task { bot.output.claw.state = Output.ClawState.WIDE }
                 delay(100.milliseconds)
-                task { bot.output.arm.state = Output.ArmState.MAX_UP }
+                task { bot.output.arm.state = Output.ArmState.CLEAR }
                 delay(200.milliseconds)
             }
 
@@ -131,7 +131,7 @@ abstract class CycleAuto(val right: Boolean) : CommandLinearOpMode<October>(::Oc
 
                 task { bot.output.lift.state = VerticalSlides.State.RunTo(VerticalSlides.Height.ABOVE_STACK.pos) }
                 await { !bot.output.lift.isBusy }
-                task { bot.output.arm.state = Output.ArmState.MAX_UP }
+                task { bot.output.arm.state = Output.ArmState.CLEAR }
 
 
                 go(bot.drive, intakePose) {
@@ -154,8 +154,8 @@ abstract class CycleAuto(val right: Boolean) : CommandLinearOpMode<October>(::Oc
                         splineToConstantHeading(vec2d(51.0, 0.0), SIDE)
                         addDisplacementMarker { bot.output.lift.runTo(VerticalSlides.Height.MID.pos) }
                         splineToConstantHeading(vec2d(32.0, 0.0), PI)
-                        splineToConstantHeading(vec2d(32.0, 23.0), PI/2.0)
-                        splineToConstantHeading(vec2d(35.0, 23.0), 0.0)
+                        splineToConstantHeading(vec2d(31.0, 21.0), PI/2.0)
+                        splineToConstantHeading(vec2d(35.0, 21.0), 0.0)
                     }
                 }
                 value(Signal.MID) {
@@ -171,8 +171,8 @@ abstract class CycleAuto(val right: Boolean) : CommandLinearOpMode<October>(::Oc
                         setTangent(heading(SIDE))
                         splineToConstantHeading(vec2d(51.0, 0.0), SIDE)
                         addDisplacementMarker { bot.output.lift.runTo(VerticalSlides.Height.MID.pos) }
-                        splineToConstantHeading(vec2d(32.0, 0.0), PI)
-                        splineToConstantHeading(vec2d(32.0, -23.0), -PI/2.0)
+                        splineToConstantHeading(vec2d(31.0, 0.0), PI)
+                        splineToConstantHeading(vec2d(31.0, -23.0), -PI/2.0)
                         splineToConstantHeading(vec2d(35.0, -23.0), 0.0)
                     }
                 }

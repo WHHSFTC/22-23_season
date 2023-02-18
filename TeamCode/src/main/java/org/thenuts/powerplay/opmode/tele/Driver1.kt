@@ -1,21 +1,16 @@
 package org.thenuts.powerplay.opmode.tele
 
+import com.acmerobotics.dashboard.config.Config
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.qualcomm.robotcore.hardware.Gamepad
-import org.thenuts.powerplay.subsystems.output.VerticalSlides
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit
 import org.thenuts.powerplay.subsystems.October
-import org.thenuts.powerplay.subsystems.intake.Intake
-import org.thenuts.powerplay.subsystems.intake.LinkageSlides
-import org.thenuts.powerplay.subsystems.intake.LinkageSlides.Companion.ticksToInches
-import org.thenuts.powerplay.subsystems.output.Output
 import org.thenuts.switchboard.command.Command
 import org.thenuts.switchboard.command.combinator.SlotCommand
-import org.thenuts.switchboard.dsl.mkSequential
 import org.thenuts.switchboard.util.Frame
-import kotlin.math.absoluteValue
-import kotlin.math.sign
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.math.min
 
+@Config
 class Driver1(val gamepad: Gamepad, val bot: October) : Command {
     override val done: Boolean = false
     val prev = Gamepad()
@@ -46,9 +41,22 @@ class Driver1(val gamepad: Gamepad, val bot: October) : Command {
 //        }
 
         val turtle = pad.shift() // || bot.output.lift.getPosition() > VerticalSlides.Height.LOW.pos + 200
-        val scalar = if (turtle) 0.5 else 1.0
+        val scalar = if (turtle) TURTLE_POWER else 1.0
 
-        val pow = Pose2d(x * scalar, y * scalar, omega)
+        var pow = Pose2d(x * scalar, y * scalar, omega)
+
+        if (pad.left_bumper) {
+            val dist = bot.passthru_dist.getDistance(DistanceUnit.INCH)
+            if (dist > PASSTHRU_DIST)
+                pow = pow.copy(x = min(PASSTHRU_POWER + PASSTHRU_SLOPE * (dist - PASSTHRU_DIST), PASSTHRU_MAX))
+            else
+                pow = pow.copy(x = 0.0)
+        } else if (pad.right_bumper) {
+            if (bot.intake_dist.getDistance(DistanceUnit.INCH) > INTAKE_DIST)
+                pow = pow.copy(x = INTAKE_POWER)
+            else
+                pow = pow.copy(x = 0.0)
+        }
 
         bot.drive.setWeightedDrivePower(pow)
         bot.log.out["drive power"] = pow
@@ -117,5 +125,17 @@ class Driver1(val gamepad: Gamepad, val bot: October) : Command {
 //        bot.log.out["intake distance"] = ticksToInches(bot.intake.slides.encoder.position.toDouble())
 
         prev.safeCopy(pad)
+    }
+
+    companion object {
+        @JvmField var INTAKE_DIST: Double = 4.0
+        @JvmField var INTAKE_POWER: Double = -0.5
+
+        @JvmField var PASSTHRU_DIST: Double = 1.5
+        @JvmField var PASSTHRU_MAX: Double = 0.5
+        @JvmField var PASSTHRU_POWER: Double = 0.25
+        @JvmField var PASSTHRU_SLOPE: Double = 0.1
+
+        @JvmField var TURTLE_POWER: Double = 0.5
     }
 }

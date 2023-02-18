@@ -19,6 +19,7 @@ class October(val log: Logger, val config: Configuration, val alliance: Alliance
     val output = Output(log, config)
 //    val intake = Intake(log, config)
     val intake_dist = config.hwMap.get(Rev2mDistanceSensor::class.java, "intake_dist")
+    val passthru_dist = config.hwMap.get(Rev2mDistanceSensor::class.java, "passthru_dist")
     val vision: Vision? = if (mode == Mode.AUTO) Vision(log, config, alliance) else null
 
     override val initCommands = listOf<Command>()

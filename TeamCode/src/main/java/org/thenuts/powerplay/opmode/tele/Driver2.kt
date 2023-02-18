@@ -105,8 +105,9 @@ class Driver2(val gamepad: Gamepad, val bot: October, val outputSlot: SlotComman
             // open claw
             outputSlot.interrupt(mkSequential {
 
-                task { bot.output.claw.state = if (bot.output.claw.state == Output.ClawState.OPEN) Output.ClawState.WIDE
+                task { bot.output.claw.state = if (bot.output.claw.state == Output.ClawState.OPEN || (bot.output.arm.state != Output.ArmState.PASSTHRU_OUTPUT && bot.output.arm.state != Output.ArmState.PASSTHRU_HOVER)) Output.ClawState.WIDE
                 else Output.ClawState.OPEN }
+//                task { bot.output.claw.state = Output.ClawState.WIDE }
                 await { !bot.output.isBusy }
             })
 /*
