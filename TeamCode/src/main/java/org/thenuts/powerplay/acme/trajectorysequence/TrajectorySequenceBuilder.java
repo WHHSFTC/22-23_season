@@ -49,7 +49,7 @@ public class TrajectorySequenceBuilder {
     private final List<DisplacementMarker> displacementMarkers;
     private final List<SpatialMarker> spatialMarkers;
 
-    private Pose2d lastPose;
+    public Pose2d lastPose;
 
     private double tangentOffset;
 

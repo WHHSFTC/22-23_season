@@ -64,7 +64,7 @@ abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(:
             task { bot.output.claw.state = Output.ClawState.CLOSED }
 //            delay(500.milliseconds)
 
-            go(bot.drive, startPose) {
+            go(bot.drive, startPose, quickExit = true) {
                 setTangent(-PI/4.0)
                 splineToConstantHeading(vec2d(3.0, offset/2.0), heading(-PI/4.0))
 //                back(3.0)
@@ -133,11 +133,11 @@ abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(:
 
             samesideOutput(VerticalSlides.Height.HIGH.pos)
 
-            repeat(3) { i ->
+            repeat(4) { i ->
                 val stackHeight = 5 - i
 
                 if (i == 0) {
-                    go(bot.drive, samesidePose) {
+                    go(bot.drive, samesidePose, quickExit = true) {
                         turnWrap(intakePose.heading - samesidePose.heading)
                     }
                 }
@@ -150,12 +150,12 @@ abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(:
 //                await { !bot.output.isBusy }
 
                 if (i == 0) {
-                    go(bot.drive, samesidePose.copy(heading = intakePose.heading)) {
+                    go(bot.drive, samesidePose.copy(heading = intakePose.heading), quickExit = true) {
 //                        setTangent((passthruPose.heading + PI).angleWrap())
                         strafeTo(intakePose.vec())
                     }
                 } else {
-                    go(bot.drive, passthruPose) {
+                    go(bot.drive, passthruPose, quickExit = true) {
 //                        setTangent((passthruPose.heading + PI).angleWrap())
                         setReversed(true)
                         splineTo(intakePose.vec(), heading(SIDE))
@@ -170,7 +170,7 @@ abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(:
                 task { bot.output.arm.state = Output.ArmState.CLEAR }
 
 
-                go(bot.drive, intakePose) {
+                go(bot.drive, intakePose, quickExit = true) {
 //                    lineToLinearHeading(outputPose)
                     setTangent(heading(MIDDLE))
                     splineTo(passthruPose.vec(), passthruPose.heading)
@@ -186,7 +186,7 @@ abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(:
 
             switch({ bot.vision!!.signal.finalTarget }) {
                 value(Signal.LEFT) {
-                    go(bot.drive, passthruPose) {
+                    go(bot.drive, passthruPose, quickExit = true) {
                         setReversed(true)
                         splineToConstantHeading(vec2d(51.0, 0.0), SIDE)
                         addDisplacementMarker { bot.output.lift.runTo(VerticalSlides.Height.MID.pos) }
@@ -196,7 +196,7 @@ abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(:
                     }
                 }
                 value(Signal.MID) {
-                    go(bot.drive, passthruPose) {
+                    go(bot.drive, passthruPose, quickExit = true) {
                         setReversed(true)
                         splineToConstantHeading(vec2d(51.0, 0.0), SIDE)
                         addDisplacementMarker { bot.output.lift.runTo(VerticalSlides.Height.MID.pos) }
@@ -204,7 +204,7 @@ abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(:
                     }
                 }
                 value(Signal.RIGHT) {
-                    go(bot.drive, passthruPose) {
+                    go(bot.drive, passthruPose, quickExit = true) {
                         setReversed(true)
                         splineToConstantHeading(vec2d(51.0, 0.0), SIDE)
                         addDisplacementMarker { bot.output.lift.runTo(VerticalSlides.Height.MID.pos) }
