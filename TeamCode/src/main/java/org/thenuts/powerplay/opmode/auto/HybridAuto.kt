@@ -18,7 +18,7 @@ import org.thenuts.switchboard.dsl.mkSequential
 import kotlin.math.PI
 import kotlin.time.Duration.Companion.milliseconds
 
-abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(::October, Alliance.RED, Mode.AUTO) {
+abstract class HybridAuto(val right: Boolean) : CommandLinearOpMode<October>(::October, Alliance.RED, Mode.AUTO) {
     lateinit var cmd: Command
 
     override fun postInitHook() {
@@ -50,7 +50,7 @@ abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(:
         val startPose = pose2d(0.0, offset, PI)
         var intakePose = pose2d(if (right) 51.5 else 50.0, if (right) -20.25 else 21.5, if (right) PI/2.0 else -PI/2.0)
         var samesidePose = pose2d(if (right) 48.5 else 48.5, if (right) 11.0 else -12.75, if (right) PI else PI)
-        var passthruPose = pose2d(if (right) 48.5 else 57.0, if (right) 11.0 else -6.0, if (right) PI else -PI/4.0)
+        var passthruPose = pose2d(if (right) 48.5 else 43.0, if (right) 11.0 else -30.0, if (right) PI else -3.0*PI/4.0)
         val MIDDLE = if (right) PI/2.0 else -PI/2.0
         val SIDE = if (right) -PI/2.0 else PI/2.0
         val cycleOffset = if (right)
@@ -133,7 +133,7 @@ abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(:
 
             samesideOutput(VerticalSlides.Height.HIGH.pos)
 
-            repeat(4) { i ->
+            repeat(3) { i ->
                 val stackHeight = 5 - i
 
                 if (i == 0) {
@@ -246,7 +246,7 @@ abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(:
 }
 
 @Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
-class LeftPassthruAuto : PassthruAuto(false)
+class LeftHybridAuto : HybridAuto(false)
 
 @Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
-class RightPassthruAuto : PassthruAuto(true)
+class RightHybridAuto : HybridAuto(true)
