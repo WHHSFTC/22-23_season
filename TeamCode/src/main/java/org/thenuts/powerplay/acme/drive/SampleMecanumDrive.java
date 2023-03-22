@@ -31,6 +31,7 @@ import org.thenuts.powerplay.acme.trajectorysequence.TrajectorySequenceBuilder;
 import org.thenuts.powerplay.acme.trajectorysequence.TrajectorySequenceRunner;
 import org.thenuts.powerplay.acme.util.AxisDirection;
 import org.thenuts.powerplay.acme.util.BNO055IMUUtil;
+import org.thenuts.powerplay.subsystems.AccelDecelConstraint;
 import org.thenuts.switchboard.command.Command;
 import org.thenuts.switchboard.util.Frame;
 
@@ -41,10 +42,12 @@ import java.util.List;
 import static org.thenuts.powerplay.acme.drive.DriveConstants.MAX_ACCEL;
 import static org.thenuts.powerplay.acme.drive.DriveConstants.MAX_ANG_ACCEL;
 import static org.thenuts.powerplay.acme.drive.DriveConstants.MAX_ANG_VEL;
+import static org.thenuts.powerplay.acme.drive.DriveConstants.MAX_DECEL;
 import static org.thenuts.powerplay.acme.drive.DriveConstants.MAX_VEL;
 import static org.thenuts.powerplay.acme.drive.DriveConstants.MOTOR_VELO_PID;
 import static org.thenuts.powerplay.acme.drive.DriveConstants.RUN_USING_ENCODER;
 import static org.thenuts.powerplay.acme.drive.DriveConstants.TRACK_WIDTH;
+import static org.thenuts.powerplay.acme.drive.DriveConstants.WHEEL_BASE;
 import static org.thenuts.powerplay.acme.drive.DriveConstants.encoderTicksToInches;
 import static org.thenuts.powerplay.acme.drive.DriveConstants.kA;
 import static org.thenuts.powerplay.acme.drive.DriveConstants.kStatic;
@@ -69,7 +72,7 @@ public class SampleMecanumDrive extends MecanumDrive implements Command {
     private TrajectorySequenceRunner trajectorySequenceRunner;
 
     private static final TrajectoryVelocityConstraint VEL_CONSTRAINT = getVelocityConstraint(MAX_VEL, MAX_ANG_VEL, TRACK_WIDTH);
-    private static final TrajectoryAccelerationConstraint ACCEL_CONSTRAINT = getAccelerationConstraint(MAX_ACCEL);
+    private static final TrajectoryAccelerationConstraint ACCEL_CONSTRAINT = new AccelDecelConstraint(MAX_ACCEL, MAX_DECEL);
 
     private TrajectoryFollower follower;
 
@@ -80,7 +83,7 @@ public class SampleMecanumDrive extends MecanumDrive implements Command {
     private VoltageSensor batteryVoltageSensor;
 
     public SampleMecanumDrive(HardwareMap hardwareMap) {
-        super(kV, kA, kStatic, TRACK_WIDTH, TRACK_WIDTH, LATERAL_MULTIPLIER);
+        super(kV, kA, kStatic, TRACK_WIDTH, WHEEL_BASE, LATERAL_MULTIPLIER);
 
         follower = new HolonomicPIDVAFollower(TRANSLATIONAL_PID, TRANSLATIONAL_PID, HEADING_PID,
                 new Pose2d(0.5, 0.5, Math.toRadians(1.0)), 0.25);

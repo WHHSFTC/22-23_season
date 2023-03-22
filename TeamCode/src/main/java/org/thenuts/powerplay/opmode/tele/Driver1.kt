@@ -2,13 +2,16 @@ package org.thenuts.powerplay.opmode.tele
 
 import com.acmerobotics.dashboard.config.Config
 import com.acmerobotics.roadrunner.geometry.Pose2d
+import com.acmerobotics.roadrunner.geometry.Vector2d
 import com.qualcomm.robotcore.hardware.Gamepad
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit
+import org.thenuts.powerplay.acme.drive.DriveConstants.*
+import org.thenuts.powerplay.opmode.auto.angleWrap
 import org.thenuts.powerplay.subsystems.October
 import org.thenuts.switchboard.command.Command
 import org.thenuts.switchboard.command.combinator.SlotCommand
 import org.thenuts.switchboard.util.Frame
-import kotlin.math.min
+import kotlin.math.*
 
 @Config
 class Driver1(val gamepad: Gamepad, val bot: October) : Command {
@@ -19,6 +22,8 @@ class Driver1(val gamepad: Gamepad, val bot: October) : Command {
     val intakeSlot = SlotCommand()
 
     override val postreqs: List<Pair<Command, Int>> = listOf(bot.drive to 10, /* bot.intake to 10, */ /* bot.intake.slides to 10 */)
+
+    var targetHeading = 0.0
 
     override fun update(frame: Frame) {
         controls(frame)
@@ -31,19 +36,37 @@ class Driver1(val gamepad: Gamepad, val bot: October) : Command {
     fun controls(frame: Frame) {
         pad.safeCopy(gamepad)
 
-        var x = -pad.left_stick_y.toDouble()
-        var y = -pad.left_stick_x.toDouble()
-        val omega = -pad.right_stick_x.toDouble()
+        val x = -pad.left_stick_y.toDouble().smooth()
+        val y = -pad.left_stick_x.toDouble().smooth()
 
 //        if (pad.dpad_left || pad.dpad_right || pad.dpad_up || pad.dpad_down) {
 //            x = (if (pad.dpad_up) 1.0 else 0.0) - (if (pad.dpad_down) 1.0 else 0.0)
 //            y = (if (pad.dpad_left) 1.0 else 0.0) - (if (pad.dpad_right) 1.0 else 0.0)
 //        }
 
-        val turtle = pad.shift() // || bot.output.lift.getPosition() > VerticalSlides.Height.LOW.pos + 200
+        val turtle = pad.left_trigger > 0.5 // || bot.output.lift.getPosition() > VerticalSlides.Height.LOW.pos + 200
         val scalar = if (turtle) TURTLE_POWER else 1.0
+        var translation = Vector2d(x, y) * scalar
 
-        var pow = Pose2d(x * scalar, y * scalar, omega)
+        val omega = if (pad.right_trigger > 0.5) {
+            val norm = sqrt(pad.right_stick_x * pad.right_stick_x + pad.right_stick_y * pad.right_stick_y).toDouble()
+            val kP = if (norm > FLICK_DEADZONE) {
+                targetHeading = atan2(-pad.right_stick_x, -pad.right_stick_y).toDouble()
+                norm.smooth(deadzone = FLICK_DEADZONE, min = HEADING_LOCK_P, max = FLICK_P) * scalar
+            } else {
+                if (prev.right_trigger <= 0.5)
+                    targetHeading = bot.drive.poseEstimate.heading.angleWrap()
+                HEADING_LOCK_P
+            }
+            val error = (targetHeading - bot.drive.poseEstimate.heading).angleWrap()
+            if (FLICK_CENTRIC)
+                translation = translation.rotated(error)
+            error * kP * kV * (TRACK_WIDTH + WHEEL_BASE) / 2.0
+        } else {
+            -pad.right_stick_x.toDouble().smooth()
+        }
+
+        var pow = Pose2d(translation, omega)
 
         if (pad.left_bumper) {
             val dist = bot.passthru_dist.getDistance(DistanceUnit.INCH)
@@ -127,6 +150,10 @@ class Driver1(val gamepad: Gamepad, val bot: October) : Command {
         prev.safeCopy(pad)
     }
 
+    fun Double.smooth(deadzone: Double = DEADZONE, exponent: Double = EXPONENT, min: Double = 0.0, max: Double = 1.0): Double {
+        return (((this.absoluteValue - deadzone) / (1.0 - deadzone)).pow(EXPONENT) * (max - min) + min) * sign(this)
+    }
+
     companion object {
         @JvmField var INTAKE_DIST: Double = 4.0
         @JvmField var INTAKE_POWER: Double = -0.5
@@ -137,5 +164,14 @@ class Driver1(val gamepad: Gamepad, val bot: October) : Command {
         @JvmField var PASSTHRU_SLOPE: Double = 0.1
 
         @JvmField var TURTLE_POWER: Double = 0.5
+
+        @JvmField var DEADZONE: Double = 0.05
+
+        @JvmField var FLICK_P: Double = 8.0
+        @JvmField var FLICK_DEADZONE: Double = 0.25
+        @JvmField var HEADING_LOCK_P: Double = 5.0
+        @JvmField var FLICK_CENTRIC: Boolean = false
+
+        @JvmField var EXPONENT: Double = 1.0
     }
 }

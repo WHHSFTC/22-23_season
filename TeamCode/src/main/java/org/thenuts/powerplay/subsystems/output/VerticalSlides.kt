@@ -29,8 +29,8 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
     }
 
     fun getPosition(): Int {
-        val pos1 = -encoder1.position
-        val pos2 = -encoder2.position
+        val pos1 = encoder1.position
+        val pos2 = encoder2.position
         log.out["pos1"] = pos1
         log.out["pos2"] = pos2
 

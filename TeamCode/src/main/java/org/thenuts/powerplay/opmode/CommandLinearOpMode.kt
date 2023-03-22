@@ -28,6 +28,7 @@ abstract class CommandLinearOpMode<T: Robot>(val robotSupplier: (Logger, Configu
     var startTime = Duration.ZERO
     var recentSteps = MutableList(10) { 0.0 }
 
+    open fun preInitHook() { }
     open fun initHook() { }
     open fun postInitHook() { }
     open fun initLoopHook() { }
@@ -57,6 +58,9 @@ abstract class CommandLinearOpMode<T: Robot>(val robotSupplier: (Logger, Configu
 
     override fun runOpMode() {
         ENABLED = true
+
+        preInitHook()
+
         log = Logger(telemetry)
         log.addReceiver(DashboardReceiver)
         config = Configuration(hardwareMap, log)
@@ -70,11 +74,12 @@ abstract class CommandLinearOpMode<T: Robot>(val robotSupplier: (Logger, Configu
         log.out["transmission interval"] = telemetry.msTransmissionInterval
         log.update()
 
-        while (!isStarted) {
+        do {
             initLoopHook()
             updateFrom(initTime)
-            bot.hardwareScheduler.output(all = true)
-        }
+            if (mode != Mode.TELE)
+                bot.hardwareScheduler.output(all = true)
+        } while (!isStarted)
 
         startTime = Duration.sinceJvmTime()
         sched.clear()

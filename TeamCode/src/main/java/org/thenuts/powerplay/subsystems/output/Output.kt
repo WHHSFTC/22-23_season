@@ -26,7 +26,7 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
     enum class ArmState(override val pos: Double) : StatefulServo.ServoPosition {
         // first five positions in order for stack intake
         INTAKE(1.0), TWO(0.972), THREE(0.944), FOUR(0.916), FIVE(0.888),
-        PASSTHRU_OUTPUT(0.25), PASSTHRU_HOVER(0.35),
+        PASSTHRU_OUTPUT(0.22), PASSTHRU_HOVER(0.30),
         CLEAR(0.70),
         SAMESIDE_HOVER(0.80), SAMESIDE_OUTPUT(0.80),
         MAX_UP(0.60),
@@ -244,13 +244,22 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
     }
 
     companion object {
-        @JvmField var LEFT_BACK = 0.00
-        @JvmField var LEFT_DOWN = 1.0
-        @JvmField var RIGHT_BACK = 1.0
-        @JvmField var RIGHT_DOWN = 0.00
+        // goBILDA Torque
+//        @JvmField var LEFT_BACK = 0.00
+//        @JvmField var LEFT_DOWN = 1.0
+//        @JvmField var RIGHT_BACK = 1.0
+//        @JvmField var RIGHT_DOWN = 0.00
+
+        @JvmField var LEFT_BACK = 1.0
+        @JvmField var LEFT_DOWN = 0.18
+        @JvmField var RIGHT_BACK = 0.0
+        @JvmField var RIGHT_DOWN = 0.82
         @JvmField var STEP = 0.028
 
-        @JvmField var MAX_ACCEL = 3.0
-        @JvmField var MAX_VEL = 10.0
+//        @JvmField var MAX_ACCEL = 5.0
+//        @JvmField var MAX_VEL = 15.0
+
+        @JvmField var MAX_ACCEL = 1.5
+        @JvmField var MAX_VEL = 1.0
     }
 }

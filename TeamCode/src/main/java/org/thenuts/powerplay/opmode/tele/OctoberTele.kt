@@ -12,6 +12,10 @@ import org.thenuts.switchboard.command.combinator.SlotCommand
 class OctoberTele : CommandLinearOpMode<October>(::October, Alliance.RED, Mode.TELE) {
     lateinit var outputSlot: SlotCommand
 
+    override fun preInitHook() {
+//        waitForStart()
+    }
+
     override fun postStartHook() {
         outputSlot = SlotCommand(postreqs = listOf(bot.output to 10, bot.output.lift to 10))
 
