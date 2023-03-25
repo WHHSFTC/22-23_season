@@ -20,13 +20,13 @@ public class Abhi extends OpMode{
         lb = hardwareMap.get(DcMotor.class, "motorLB");
     }
 
-    public void move(){
+    public void loop(){
        double y = 0; //vertical
        double x = 0; //horizontal
-       double r = 0; //pivot/straif
+       double r = 0; //pivot/rotation
 
-        y = -gamepad1.left_stick_y;
-        x = -gamepad1.left_stick_x;
+        y = -gamepad1.left_stick_x;
+        x = -gamepad1.left_stick_y;
         r = -gamepad1.right_stick_x;
 
         double preRF = (r+(y+x));
@@ -53,16 +53,12 @@ public class Abhi extends OpMode{
         telemetry.update();
     }
 
-    public void Stop(){
+    public void stop(){
         super.stop();
         rf.setPower(0);
         lf.setPower(0);
         rb.setPower(0);
         lb.setPower(0);
 }
-
-    public void loop(){
-
-    }
 
 }
