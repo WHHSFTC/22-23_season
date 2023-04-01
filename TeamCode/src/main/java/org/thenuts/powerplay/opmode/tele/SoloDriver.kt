@@ -26,6 +26,12 @@ class SoloDriver(val gamepad: Gamepad, val bot: October, val outputSlot: SlotCom
         pad1.safeCopy(gamepad)
         pad2.safeCopy(pad1)
         if (pad1.right_trigger > 0.5) pad1.right_stick_x = 0.0f
+        pad1.dpad_down = false
+        pad1.dpad_up = false
+        pad1.dpad_left = false
+        pad1.dpad_right = false
+        pad1.left_bumper = false
+        pad1.right_bumper = false
         d1.update(frame)
         d2.update(frame)
     }

@@ -26,9 +26,10 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
     enum class ArmState(override val pos: Double) : StatefulServo.ServoPosition {
         // first five positions in order for stack intake
         INTAKE(1.0), TWO(0.972), THREE(0.944), FOUR(0.916), FIVE(0.888),
-        PASSTHRU_OUTPUT(0.22), PASSTHRU_HOVER(0.30),
-        CLEAR(0.70),
-        SAMESIDE_HOVER(0.80), SAMESIDE_OUTPUT(0.80),
+        GROUND(0.972),
+        PASSTHRU_OUTPUT(0.28), PASSTHRU_HOVER(0.35),
+        CLEAR(0.55),
+        SAMESIDE_HOVER(0.68), SAMESIDE_OUTPUT(0.84),
         MAX_UP(0.60),
         HORIZONTAL(0.85);
 
@@ -41,7 +42,7 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
     }
 
     enum class ClawState(override val pos: Double) : StatefulServo.ServoPosition {
-        WIDE(0.87), OPEN(0.68), CLOSED(0.55), JUNCTION(0.65)
+        WIDE(0.95), NARROW(0.74), CLOSED(0.55), JUNCTION(0.74)
     }
 
     enum class LiftState {
@@ -81,7 +82,7 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
         CLEAR_LOW(LiftState.INTAKE, ArmState.CLEAR, ClawState.CLOSED),
 
         CLEAR(LiftState.CLEAR, ArmState.CLEAR, ClawState.CLOSED),
-        CLEAR_OPEN(LiftState.CLEAR, ArmState.CLEAR, ClawState.OPEN),
+        CLEAR_OPEN(LiftState.CLEAR, ArmState.CLEAR, ClawState.NARROW),
 
         S_HOVER(LiftState.OUTPUT, ArmState.SAMESIDE_HOVER, ClawState.CLOSED),
         S_LOWER(LiftState.OUTPUT, ArmState.SAMESIDE_OUTPUT, ClawState.CLOSED),
@@ -89,7 +90,7 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
 
         P_HOVER(LiftState.OUTPUT, ArmState.PASSTHRU_HOVER, ClawState.CLOSED),
         P_LOWER(LiftState.OUTPUT, ArmState.PASSTHRU_OUTPUT, ClawState.CLOSED),
-        P_DROP(LiftState.OUTPUT, ArmState.PASSTHRU_OUTPUT, ClawState.OPEN),
+        P_DROP(LiftState.OUTPUT, ArmState.PASSTHRU_OUTPUT, ClawState.NARROW),
         P_JUNCTION(LiftState.OUTPUT, ArmState.PASSTHRU_OUTPUT, ClawState.JUNCTION);
 //
 //        BACK_CLOSED(LiftState.INTAKE, ExtensionState.BACK, ClawState.CLOSED),
@@ -259,7 +260,7 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
 //        @JvmField var MAX_ACCEL = 5.0
 //        @JvmField var MAX_VEL = 15.0
 
-        @JvmField var MAX_ACCEL = 1.5
-        @JvmField var MAX_VEL = 1.0
+        @JvmField var MAX_ACCEL = 2.5
+        @JvmField var MAX_VEL = 2.0
     }
 }

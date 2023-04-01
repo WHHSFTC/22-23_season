@@ -199,6 +199,22 @@ public class TrajectorySequenceRunner {
         packet.put("yError", getLastPoseError().getY());
         packet.put("headingError (deg)", Math.toDegrees(getLastPoseError().getHeading()));
 
+        if (driveSignal != null) {
+            packet.put("driveSignal vel x", driveSignal.getVel().getX());
+            packet.put("driveSignal vel y", driveSignal.getVel().getY());
+            packet.put("driveSignal omega", Math.toDegrees(driveSignal.getVel().getHeading()));
+            packet.put("driveSignal accel x", driveSignal.getAccel().getX());
+            packet.put("driveSignal accel y", driveSignal.getAccel().getY());
+            packet.put("driveSignal alpha", Math.toDegrees(driveSignal.getAccel().getHeading()));
+        } else {
+            packet.put("driveSignal vel x", 0.0);
+            packet.put("driveSignal vel y", 0.0);
+            packet.put("driveSignal omega", 0.0);
+            packet.put("driveSignal accel x", 0.0);
+            packet.put("driveSignal accel y", 0.0);
+            packet.put("driveSignal alpha", 0.0);
+        }
+
         draw(fieldOverlay, currentTrajectorySequence, currentSegment, targetPose, poseEstimate);
 
         if (!CommandLinearOpMode.DashboardReceiver.getENABLED())

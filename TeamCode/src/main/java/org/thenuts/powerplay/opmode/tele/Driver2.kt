@@ -2,7 +2,6 @@ package org.thenuts.powerplay.opmode.tele
 
 import com.acmerobotics.dashboard.config.Config
 import com.qualcomm.robotcore.hardware.Gamepad
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit
 import org.thenuts.powerplay.subsystems.output.VerticalSlides
 import org.thenuts.powerplay.subsystems.output.Output
 import org.thenuts.powerplay.subsystems.October
@@ -105,8 +104,8 @@ class Driver2(val gamepad: Gamepad, val bot: October, val outputSlot: SlotComman
             // open claw
             outputSlot.interrupt(mkSequential {
 
-                task { bot.output.claw.state = if (bot.output.claw.state == Output.ClawState.OPEN || (bot.output.arm.state != Output.ArmState.PASSTHRU_OUTPUT && bot.output.arm.state != Output.ArmState.PASSTHRU_HOVER)) Output.ClawState.WIDE
-                else Output.ClawState.OPEN }
+                task { bot.output.claw.state = if (bot.output.claw.state == Output.ClawState.NARROW || (bot.output.arm.state != Output.ArmState.PASSTHRU_OUTPUT && bot.output.arm.state != Output.ArmState.PASSTHRU_HOVER)) Output.ClawState.WIDE
+                else Output.ClawState.NARROW }
 //                task { bot.output.claw.state = Output.ClawState.WIDE }
                 await { !bot.output.isBusy }
             })
@@ -163,25 +162,26 @@ class Driver2(val gamepad: Gamepad, val bot: October, val outputSlot: SlotComman
                 bot.output.outputHeight = VerticalSlides.Height.HIGH.pos
 //                interruptTo(Output.OutputState.CLEAR)
                 updateHeight()
-                bot.output.arm.state = Output.ArmState.CLEAR
+                bot.output.arm.state = Output.ArmState.PASSTHRU_HOVER
 //                bot.output.lift.state = VerticalSlides.State.RunTo(VerticalSlides.Height.HIGH.pos)
             } else if (pad.dpad_left && !prev.dpad_left) {
                 outputSlot.interrupt(mkSequential {
                     task { bot.output.lift.runTo(0) }
                     await { !bot.output.isBusy }
-                    task { bot.output.arm.state = Output.ArmState.values()[intakeHeight - 1] }
+//                    task { bot.output.arm.state = Output.ArmState.values()[intakeHeight - 1] }
+                    task { bot.output.arm.state = Output.ArmState.GROUND }
                 })
             } else if (pad.dpad_right && !prev.dpad_right) {
                 bot.output.outputHeight = VerticalSlides.Height.MID.pos
 //                interruptTo(Output.OutputState.CLEAR)
                 updateHeight()
-                bot.output.arm.state = Output.ArmState.CLEAR
+                bot.output.arm.state = Output.ArmState.PASSTHRU_HOVER
 //                bot.output.lift.state = VerticalSlides.State.RunTo(VerticalSlides.Height.MID.pos)
             } else if (pad.dpad_down && !prev.dpad_down) {
                 bot.output.outputHeight = VerticalSlides.Height.LOW.pos
 //                interruptTo(Output.OutputState.CLEAR)
                 updateHeight()
-                bot.output.arm.state = Output.ArmState.CLEAR
+                bot.output.arm.state = Output.ArmState.PASSTHRU_HOVER
 //                bot.output.lift.state = VerticalSlides.State.RunTo(VerticalSlides.Height.LOW.pos)
             }
         }
@@ -189,11 +189,15 @@ class Driver2(val gamepad: Gamepad, val bot: October, val outputSlot: SlotComman
         if (pad.b && !prev.b) {
 //            interruptTo(Output.OutputState.P_LOWER)
             outputSlot.interrupt(mkSequential {
-                task { bot.output.arm.state = Output.ArmState.SAMESIDE_OUTPUT }
+                task {
+                    bot.output.arm.state =
+                        if (bot.output.arm.state == Output.ArmState.SAMESIDE_HOVER) Output.ArmState.SAMESIDE_OUTPUT
+                        else Output.ArmState.SAMESIDE_HOVER
+                }
                 await { !bot.output.isBusy }
             })
         } else if (pad.x && !prev.x) {
-            interruptTo(Output.OutputState.S_LOWER)
+//            interruptTo(Output.OutputState.S_LOWER)
             outputSlot.interrupt(mkSequential {
                 task {
                     bot.output.arm.state =
@@ -216,20 +220,26 @@ class Driver2(val gamepad: Gamepad, val bot: October, val outputSlot: SlotComman
 //            interruptTo(Output.OutputState.CLEAR)
             outputSlot.interrupt(mkSequential {
                 task { bot.output.arm.state = Output.ArmState.CLEAR }
+                if (bot.output.claw.state == Output.ClawState.WIDE)
+                    task { bot.output.claw.state = Output.ClawState.NARROW }
                 await { !bot.output.isBusy }
             })
         } else if (pad.a && !prev.a) {
 //            interruptTo(Output.OutputState.GROUND)
             outputSlot.interrupt(mkSequential {
-                if (bot.output.arm.state.pos < Output.ArmState.CLEAR.pos) {
-                    task { bot.output.arm.state = Output.ArmState.CLEAR }
-                    await { !bot.output.isBusy }
+                if (bot.output.arm.state.pos < Output.ArmState.SAMESIDE_HOVER.pos) {
+                    task { bot.output.claw.state = Output.ClawState.NARROW }
                 }
-                task { bot.output.lift.runTo(0) }
-                await { !bot.output.isBusy }
-                task { bot.output.arm.state = Output.ArmState.values()[intakeHeight - 1] }
+                task { bot.output.arm.state = Output.ArmState.INTAKE }
+                await { bot.output.linkedServos.position > Output.ArmState.SAMESIDE_HOVER.pos }
                 task { bot.output.claw.state = Output.ClawState.WIDE }
+                task { bot.output.lift.runTo(0) }
+//                await { !bot.output.isBusy }
+////                task { bot.output.arm.state = Output.ArmState.values()[intakeHeight - 1] }
+//                task { bot.output.arm.state = Output.ArmState.INTAKE }
+//                task { bot.output.claw.state = Output.ClawState.WIDE }
             })
+            intakeHeight = 1
         }
 
         bot.log.out["lift pos"] = bot.output.lift.encoder1.position

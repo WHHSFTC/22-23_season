@@ -63,7 +63,7 @@ public class SampleMecanumDrive extends MecanumDrive implements Command {
     public static PIDCoefficients TRANSLATIONAL_PID = new PIDCoefficients(11, 0, 1);
     public static PIDCoefficients HEADING_PID = new PIDCoefficients(8, 0, 0);
 
-    public static double LATERAL_MULTIPLIER = 1;
+    public static double LATERAL_MULTIPLIER = 1.485;
 
     public static double VX_WEIGHT = 1;
     public static double VY_WEIGHT = 1;
@@ -72,14 +72,15 @@ public class SampleMecanumDrive extends MecanumDrive implements Command {
     private TrajectorySequenceRunner trajectorySequenceRunner;
 
     private static final TrajectoryVelocityConstraint VEL_CONSTRAINT = getVelocityConstraint(MAX_VEL, MAX_ANG_VEL, TRACK_WIDTH);
-    private static final TrajectoryAccelerationConstraint ACCEL_CONSTRAINT = new AccelDecelConstraint(MAX_ACCEL, MAX_DECEL);
+    private static final TrajectoryAccelerationConstraint ACCEL_CONSTRAINT = getAccelerationConstraint(MAX_ACCEL);
+//    private static final TrajectoryAccelerationConstraint ACCEL_CONSTRAINT = new AccelDecelConstraint(MAX_ACCEL, MAX_DECEL);
 
     private TrajectoryFollower follower;
 
     private DcMotorEx leftFront, leftRear, rightRear, rightFront;
     private List<DcMotorEx> motors;
 
-    private BNO055IMU imu;
+    public BNO055IMU imu;
     private VoltageSensor batteryVoltageSensor;
 
     public SampleMecanumDrive(HardwareMap hardwareMap) {
@@ -152,8 +153,8 @@ public class SampleMecanumDrive extends MecanumDrive implements Command {
         leftRear.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // TODO: if desired, use setLocalizer() to change the localization method
-        setLocalizer(new TwoOdo(hardwareMap, imu));
-//        setLocalizer(new ThreeOdo(hardwareMap, imu));
+//        setLocalizer(new TwoOdo(hardwareMap, imu));
+        setLocalizer(new ThreeOdo(hardwareMap, imu));
 
         trajectorySequenceRunner = new TrajectorySequenceRunner(follower, HEADING_PID);
     }

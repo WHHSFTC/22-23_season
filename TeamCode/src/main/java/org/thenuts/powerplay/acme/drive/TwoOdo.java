@@ -1,5 +1,8 @@
 package org.thenuts.powerplay.acme.drive;
 
+import static org.thenuts.powerplay.acme.drive.ThreeOdo.FRONT_OFFSET;
+import static org.thenuts.powerplay.acme.drive.ThreeOdo.LATERAL_DISTANCE;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -34,9 +37,7 @@ public class TwoOdo extends TwoTrackingWheelLocalizer {
     public static double WHEEL_RADIUS = 0.6889764; // in
     public static double GEAR_RATIO = 1; // output (wheel) speed / input (encoder) speed
 
-    public static double LATERAL_DISTANCE = 2 * 5.96490; // in; distance between the left and right wheels
     public static double BACK_OFFSET = -4.55380; // in; offset of the lateral wheel
-    public static double FRONT_OFFSET = -4.89501; // in; offset of the lateral wheel
 
     private Encoder leftEncoder, rightEncoder, backEncoder, frontEncoder;
     private BNO055IMU imu;
@@ -46,14 +47,14 @@ public class TwoOdo extends TwoTrackingWheelLocalizer {
         super(Arrays.asList(
 //                new Pose2d(0.82497-1.0, LATERAL_DISTANCE / 2, 0), // left
                 new Pose2d(0.82497-1.0, -LATERAL_DISTANCE / 2, 0), // right
-                new Pose2d(BACK_OFFSET, -0.02949, Math.toRadians(90)) // back
-//                new Pose2d(FRONT_OFFSET, -0.02949, Math.toRadians(90)) // front
+//                new Pose2d(BACK_OFFSET, -0.02949, Math.toRadians(90)) // back
+                new Pose2d(FRONT_OFFSET, -5.0, Math.toRadians(90)) // front
         ));
 
-//        leftEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "motorLB"));
-        rightEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "motorRB"));
-        backEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "motorRF"));
-//        frontEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "motorLF"));
+//        leftEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "motorRF"));
+        rightEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "motorLF"));
+//        backEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "motorRB"));
+        frontEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "motorLB"));
         this.imu = imu;
 
         // TODO: reverse any encoders using Encoder.setDirection(Encoder.Direction.REVERSE)
@@ -69,8 +70,8 @@ public class TwoOdo extends TwoTrackingWheelLocalizer {
         return Arrays.asList(
 //                encoderTicksToInches(leftEncoder.getCurrentPosition()),
                 encoderTicksToInches(rightEncoder.getCurrentPosition()),
-                encoderTicksToInches(backEncoder.getCurrentPosition())
-//                encoderTicksToInches(frontEncoder.getCurrentPosition())
+//                encoderTicksToInches(backEncoder.getCurrentPosition())
+                encoderTicksToInches(frontEncoder.getCurrentPosition())
         );
     }
 
@@ -84,8 +85,8 @@ public class TwoOdo extends TwoTrackingWheelLocalizer {
         return Arrays.asList(
 //                encoderTicksToInches(leftEncoder.getCorrectedVelocity()),
                 encoderTicksToInches(rightEncoder.getCorrectedVelocity()),
-                encoderTicksToInches(backEncoder.getCorrectedVelocity())
-//                encoderTicksToInches(frontEncoder.getCorrectedVelocity())
+//                encoderTicksToInches(backEncoder.getCorrectedVelocity())
+                encoderTicksToInches(frontEncoder.getCorrectedVelocity())
         );
     }
 

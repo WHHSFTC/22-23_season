@@ -3,7 +3,6 @@ package org.thenuts.powerplay.opmode.auto
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.geometry.Vector2d
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
-import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import org.thenuts.powerplay.game.Alliance
 import org.thenuts.powerplay.game.Mode
 import org.thenuts.powerplay.game.Signal
@@ -123,7 +122,7 @@ abstract class HybridAuto(val right: Boolean) : CommandLinearOpMode<October>(::O
 //                        VerticalSlides.State.RunTo(VerticalSlides.Height.MID.pos)
 //                }
 //                await { !bot.output.lift.isBusy }
-                task { bot.output.claw.state = Output.ClawState.OPEN }
+                task { bot.output.claw.state = Output.ClawState.NARROW }
 //                delay(300.milliseconds)
 //                task { bot.output.claw.state = Output.ClawState.CLOSED }
                 delay(100.milliseconds)

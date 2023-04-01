@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp
 import org.thenuts.powerplay.game.Alliance
 import org.thenuts.powerplay.game.Mode
 import org.thenuts.powerplay.opmode.CommandLinearOpMode
+import org.thenuts.powerplay.subsystems.KalmanLocalizer
 import org.thenuts.powerplay.subsystems.October
 import org.thenuts.switchboard.command.CommandScheduler
 import org.thenuts.switchboard.command.combinator.SlotCommand
@@ -17,6 +18,7 @@ class OctoberTele : CommandLinearOpMode<October>(::October, Alliance.RED, Mode.T
     }
 
     override fun postStartHook() {
+        bot.drive.localizer = KalmanLocalizer(bot.drive.localizer, bot.drive.imu)
         outputSlot = SlotCommand(postreqs = listOf(bot.output to 10, bot.output.lift to 10))
 
         sched.addCommand(outputSlot)

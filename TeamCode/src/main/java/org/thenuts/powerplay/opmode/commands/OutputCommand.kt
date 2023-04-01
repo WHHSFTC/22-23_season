@@ -9,7 +9,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class OutputCommand(val manip: Output, val outputHeight: VerticalSlides.Height) : Command by mkSequential(strict = false, {
     add(LiftCommand(manip.lift, VerticalSlides.State.RunTo(Integer.max(0, outputHeight.pos - 4 * VerticalSlides.CONE_STEP))))
 
-    task { manip.claw.state = Output.ClawState.OPEN }
+    task { manip.claw.state = Output.ClawState.NARROW }
     delay(2000.milliseconds)
 
     add(LiftCommand(manip.lift, VerticalSlides.State.RunTo(outputHeight.pos)))
