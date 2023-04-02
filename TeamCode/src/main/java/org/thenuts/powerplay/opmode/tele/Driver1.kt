@@ -216,8 +216,8 @@ class Driver1(val gamepad: Gamepad, val bot: October) : Command {
 
         // limit local acceleration
         val limitedTranslation = Vector2d(
-            scaledTranslation.x.coerceIn(xRange),
-            scaledTranslation.y.coerceIn(yRange)
+            scaledTranslation.x,//.coerceIn(xRange),
+            scaledTranslation.y//.coerceIn(yRange)
         )
 
         val vel = Pose2d(

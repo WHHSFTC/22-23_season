@@ -48,7 +48,7 @@ abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(:
 
         val offset = 5.0
         val startPose = pose2d(0.0, offset, PI)
-        var intakePose = pose2d(if (right) 50.0 else 51.25, if (right) -24.75 else 24.5, if (right) PI/2.0 else -PI/2.0)
+        var intakePose = pose2d(if (right) 50.0 else 51.25, if (right) -24.75 else 23.5, if (right) PI/2.0 else -PI/2.0)
         var samesidePose = pose2d(if (right) 50.0 else 50.0, if (right) 13.0 else -13.0, if (right) PI else PI)
         var passthruPose = pose2d(if (right) 55.0 else 55.0, if (right) 8.0 else -8.0, if (right) PI/4.0 else -PI/4.0)
         val MIDDLE = if (right) PI/2.0 else -PI/2.0
