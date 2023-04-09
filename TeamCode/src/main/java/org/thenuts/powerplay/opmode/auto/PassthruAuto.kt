@@ -8,24 +8,21 @@ import org.thenuts.powerplay.game.Mode
 import org.thenuts.powerplay.game.Signal
 import org.thenuts.powerplay.opmode.CommandLinearOpMode
 import org.thenuts.powerplay.opmode.commands.go
-import org.thenuts.powerplay.subsystems.KalmanLocalizer
+import org.thenuts.powerplay.subsystems.GlobalState
+import org.thenuts.powerplay.subsystems.localization.KalmanLocalizer
 import org.thenuts.powerplay.subsystems.output.VerticalSlides
 import org.thenuts.powerplay.subsystems.October
 import org.thenuts.powerplay.subsystems.output.Output
 import org.thenuts.switchboard.command.Command
 import org.thenuts.switchboard.command.CommandScheduler
 import org.thenuts.switchboard.dsl.mkSequential
+import org.thenuts.switchboard.util.sinceJvmTime
 import kotlin.math.PI
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
-abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(::October, Alliance.RED, Mode.AUTO) {
-    lateinit var cmd: Command
-
-    override fun postInitHook() {
-        bot.vision?.front?.startDebug()
-        bot.vision?.signal?.enable()
-        bot.vision?.gamepad = gamepad1
-
+abstract class PassthruAuto(val right: Boolean) : OctoberAuto() {
+    override fun generateCommand(): Command {
         val reference = Pose2d(if (right) -36.0 else 36.0, 72.0, -PI/2.0)
 
         fun vec2d(x: Double, y: Double): Vector2d {
@@ -48,9 +45,9 @@ abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(:
 
         val offset = 5.0
         val startPose = pose2d(0.0, offset, PI)
-        var intakePose = pose2d(if (right) 50.0 else 51.25, if (right) -24.75 else 23.5, if (right) PI/2.0 else -PI/2.0)
-        var samesidePose = pose2d(if (right) 50.0 else 50.0, if (right) 13.0 else -13.0, if (right) PI else PI)
-        var passthruPose = pose2d(if (right) 55.0 else 55.0, if (right) 8.0 else -8.0, if (right) PI/4.0 else -PI/4.0)
+        var intakePose = pose2d(if (right) 49.0 else 51.25, if (right) -25.5 else 24.25, if (right) PI/2.0 else -PI/2.0)
+        var samesidePose = pose2d(if (right) 50.0 else 50.0, if (right) 11.5 else -13.0, if (right) PI else PI)
+        var passthruPose = pose2d(if (right) 55.0 else 55.0, if (right) 5.0 else -8.0, if (right) PI/4.0 else -PI/4.0)
         val MIDDLE = if (right) PI/2.0 else -PI/2.0
         val SIDE = if (right) -PI/2.0 else PI/2.0
         val cycleOffset = if (right)
@@ -58,9 +55,9 @@ abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(:
         else
             pose2d(0.0, 0.0, 0.0)
 
-        KalmanLocalizer.TELE_HEADING_OFFSET = bot.drive.rawExternalHeading
         bot.drive.poseEstimate = startPose
-        cmd = mkSequential {
+
+        return mkSequential {
 //            add(ExtendCommand(bot.output, scoreHeight, Output.OutputSide.SAMESIDE))
             task { bot.output.claw.state = Output.ClawState.CLOSED }
 //            delay(500.milliseconds)
@@ -167,7 +164,8 @@ abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(:
                 delay(450.milliseconds)
 
                 task { bot.output.lift.state = VerticalSlides.State.RunTo(VerticalSlides.Height.HIGH.pos) }
-                await { bot.output.lift.getPosition() > VerticalSlides.Height.ABOVE_STACK.pos }
+                if (stackHeight != 1)
+                    await { bot.output.lift.getPosition() > VerticalSlides.Height.ABOVE_STACK.pos }
                 task { bot.output.arm.state = Output.ArmState.CLEAR }
 
 
@@ -185,60 +183,36 @@ abstract class PassthruAuto(val right: Boolean) : CommandLinearOpMode<October>(:
                 passthruOutput(VerticalSlides.Height.HIGH.pos)
             }
 
-            switch({ bot.vision?.signal?.finalTarget }) {
+            task { bot.output.arm.state = Output.ArmState.INTAKE }
+            task { bot.output.lift.runTo(0) }
+
+            switch({ bot.vision?.signal?.finalTarget ?: Signal.MID }) {
                 value(Signal.LEFT) {
                     go(bot.drive, passthruPose, quickExit = true) {
                         setReversed(true)
-                        splineToConstantHeading(vec2d(51.0, 0.0), SIDE)
-                        addDisplacementMarker { bot.output.lift.runTo(VerticalSlides.Height.MID.pos) }
-                        splineToConstantHeading(vec2d(32.0, 0.0), PI)
-                        splineToConstantHeading(vec2d(32.0, 23.0), PI/2.0)
-                        splineToConstantHeading(vec2d(35.0, 23.0), 0.0)
+                        splineTo(vec2d(51.0, 0.0), SIDE)
+                        splineToSplineHeading(pose2d(51.0, 24.0, -SIDE), PI/2.0)
                     }
                 }
-                value(Signal.RIGHT) {
-                    go(bot.drive, passthruPose, quickExit = true) {
-                        setReversed(true)
-                        splineToConstantHeading(vec2d(51.0, 0.0), SIDE)
-                        addDisplacementMarker { bot.output.lift.runTo(VerticalSlides.Height.MID.pos) }
-                        splineToConstantHeading(vec2d(32.0, 0.0), PI)
-                        splineToConstantHeading(vec2d(32.0, -23.0), -PI/2.0)
-                        splineToConstantHeading(vec2d(35.0, -23.0), 0.0)
-                    }
-                }
-                fallback { // MID or null
+                value(Signal.MID) { // MID or null
                     go(bot.drive, passthruPose, quickExit = true) {
                         setReversed(true)
 //                        splineTo(vec2d(48.0, 0.0), PI)
                         splineTo(vec2d(35.0, 0.0), PI)
                     }
-                    task { bot.output.lift.runTo(VerticalSlides.Height.MID.pos) }
+//                    task { bot.output.lift.runTo(VerticalSlides.Height.MID.pos) }
+                }
+                value(Signal.RIGHT) {
+                    go(bot.drive, passthruPose, quickExit = true) {
+                        setReversed(true)
+                        splineTo(vec2d(51.0, 0.0), SIDE)
+                        splineToSplineHeading(pose2d(51.0, -24.0, -SIDE), -PI/2.0)
+                    }
                 }
             }
-            task { bot.output.lift.runTo(0) }
             delay(1000.milliseconds)
             task { stop() }
         }
-    }
-
-    override fun stopHook() {
-        bot.vision?.front?.stopDebug()
-        bot.vision?.signal?.disable()
-    }
-
-    override fun initLoopHook() {
-        log.out["signal"] = bot.vision?.signal?.finalTarget
-    }
-
-    override fun postStartHook() {
-        bot.vision?.front?.stopDebug()
-        bot.vision?.signal?.disable()
-        bot.vision?.gamepad = null
-        sched.addCommand(cmd)
-    }
-
-    override fun loopHook() {
-        log.out["COMMAND ORDER"] = sched.nodes.filterIsInstance<CommandScheduler.CommandNode>().map { it.runner.cmd::class.simpleName }
     }
 
     companion object {

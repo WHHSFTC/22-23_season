@@ -23,4 +23,23 @@ sealed interface Transformation {
             return matrix
         }
     }
+
+    class Composition(val left: Transformation, val right: Transformation): Transformation {
+        override val inputDimension: Int = right.inputDimension
+        override val outputDimension: Int = left.outputDimension
+
+        init {
+            assert(left.inputDimension == right.outputDimension)
+        }
+
+        override fun invoke(x: RealVector): RealVector {
+            return left(right(x))
+        }
+
+        override fun jacobian(x: RealVector): RealMatrix {
+            return left.jacobian(right(x)) * right.jacobian(x)
+        }
+    }
 }
+
+operator fun Transformation.times(other: Transformation) = Transformation.Composition(this, other)

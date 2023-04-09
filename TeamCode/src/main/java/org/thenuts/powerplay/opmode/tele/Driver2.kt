@@ -242,6 +242,10 @@ class Driver2(val gamepad: Gamepad, val bot: October, val outputSlot: SlotComman
             intakeHeight = 1
         }
 
+        if (pad.guide && !prev.guide) {
+            bot.output.lift.zeroPosition()
+        }
+
         bot.log.out["lift pos"] = bot.output.lift.encoder1.position
 
         prev.safeCopy(pad)

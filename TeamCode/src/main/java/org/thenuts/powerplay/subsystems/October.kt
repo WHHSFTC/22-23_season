@@ -22,7 +22,7 @@ class October(val log: Logger, val config: Configuration, val alliance: Alliance
 //    val passthru_dist = config.hwMap.get(Rev2mDistanceSensor::class.java, "passthru_dist")
     val intakeSensor = config.hwMap["intakeDist"] as Rev2mDistanceSensor
     val tapeDetector = TapeDetector(log, config.hwMap)
-    val vision: Vision? = null//if (mode == Mode.AUTO) Vision(log, config, alliance) else null
+    val vision: Vision? = if (mode == Mode.AUTO) Vision(log, config, alliance) else null
 
     override val initCommands = listOf<Command>()
     override val startCommands = listOf<Command>(drive, output, output.lift /*, intake, intake.slides */)

@@ -1,10 +1,9 @@
-package org.thenuts.powerplay.subsystems
+package org.thenuts.powerplay.subsystems.localization
 
 import com.acmerobotics.dashboard.config.Config
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.localization.Localizer
 import com.qualcomm.hardware.bosch.BNO055IMU
-import org.thenuts.powerplay.acme.drive.ThreeOdo
 import org.thenuts.powerplay.opmode.auto.angleWrap
 import org.thenuts.switchboard.util.sinceJvmTime
 import kotlin.time.Duration

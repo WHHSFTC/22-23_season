@@ -21,11 +21,16 @@ import kotlin.time.DurationUnit
 @Config
 class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
     val encoder1 = config.encoders["slides1"].also {
-        it.stopAndReset()
+//        it.stopAndReset()
     }
 
     val encoder2 = config.encoders["slides2"].also {
-        it.stopAndReset()
+//        it.stopAndReset()
+    }
+
+    fun zeroPosition() {
+        encoder1.stopAndReset()
+        encoder2.stopAndReset()
     }
 
     fun getPosition(): Int {
@@ -111,12 +116,12 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
 
     @Config
     enum class Height(@JvmField var pos: Int) {
-        INTAKE(0),  TWO(60), THREE(100), FOUR(150), FIVE(200),
+        INTAKE(0),  TWO(50), THREE(90), FOUR(140), FIVE(180),
 
         MIN_CLEAR(0), ABOVE_STACK(250),
 
         TERMINAL(38), GROUND(38),
-        LOW(0), MID(335), HIGH(690);
+        LOW(0), MID(335), HIGH(660);
     }
 
     val isBusy: Boolean
@@ -261,8 +266,8 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
 //        @JvmField var MAX_SLIDES_DOWN = 0.1
 
         @JvmField var LIFT_RUN_TO_PID = PIDCoefficients(
-            kP = 0.01,
-            kD = 0.00008
+            kP = 0.008,
+            kD = 0.0005
         )
         @JvmField var LIFT_KV = 1.0
         @JvmField var LIFT_KA = 0.0
@@ -274,7 +279,7 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
         @JvmField var SAME_THRESHOLD = 10
 
         @JvmField var BRAKE_HEIGHT = 0
-        @JvmField var DROP_POWER = -0.30
+        @JvmField var DROP_POWER = -1.0
         @JvmField var EDGE_POWER = 0.25
 
         @JvmField var MAX_DIFF = 200
@@ -284,7 +289,7 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
         @JvmField var BUSY_THRESHOLD = 150
 
         @JvmField var INSIDE_BOT = 260
-        @JvmField var INSIDE_DROP_POWER = -0.10
+        @JvmField var INSIDE_DROP_POWER = -1.0
         //@JvmField var INSIDE_DROP_MODE = Motor.ZeroPowerBehavior.BRAKE
         @JvmField var BOT_FRICTION = 0.1
 
