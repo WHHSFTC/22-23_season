@@ -246,7 +246,7 @@ class Driver2(val gamepad: Gamepad, val bot: October, val outputSlot: SlotComman
             bot.output.lift.zeroPosition()
         }
 
-        bot.log.out["lift pos"] = bot.output.lift.encoder1.position
+        bot.log.out["lift pos"] = bot.output.lift.encoder2.position
 
         prev.safeCopy(pad)
     }

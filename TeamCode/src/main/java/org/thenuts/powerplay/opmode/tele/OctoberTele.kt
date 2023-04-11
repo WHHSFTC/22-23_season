@@ -8,6 +8,7 @@ import org.thenuts.powerplay.opmode.CommandLinearOpMode
 import org.thenuts.powerplay.subsystems.GlobalState
 import org.thenuts.powerplay.subsystems.localization.KalmanLocalizer
 import org.thenuts.powerplay.subsystems.October
+import org.thenuts.powerplay.subsystems.output.Output
 import org.thenuts.switchboard.command.CommandScheduler
 import org.thenuts.switchboard.command.combinator.SlotCommand
 import org.thenuts.switchboard.util.sinceJvmTime
@@ -19,8 +20,9 @@ import kotlin.time.Duration.Companion.seconds
 class OctoberTele : CommandLinearOpMode<October>(::October, Alliance.RED, Mode.TELE) {
     lateinit var outputSlot: SlotCommand
 
-    override fun preInitHook() {
-//        waitForStart()
+    override fun postInitHook() {
+        bot.output.claw.state = Output.ClawState.CLOSED
+        bot.output.arm.state = Output.ArmState.CLEAR
     }
 
     override fun postStartHook() {

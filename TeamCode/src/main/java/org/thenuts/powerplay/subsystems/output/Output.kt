@@ -27,7 +27,7 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
         // first five positions in order for stack intake
         INTAKE(1.0), TWO(0.972), THREE(0.944), FOUR(0.916), FIVE(0.888),
         GROUND(0.972),
-        PASSTHRU_OUTPUT(0.28), PASSTHRU_HOVER(0.35),
+        PASSTHRU_OUTPUT(0.23), PASSTHRU_HOVER(0.35),
         CLEAR(0.55),
         SAMESIDE_HOVER(0.68), SAMESIDE_OUTPUT(0.84),
         MAX_UP(0.60),

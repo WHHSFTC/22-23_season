@@ -39,7 +39,7 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
         log.out["pos1"] = pos1
         log.out["pos2"] = pos2
 
-        return pos1
+        return pos2
 //        return if ((pos1 - pos2).absoluteValue < MAX_DIFF) {
 //            (pos1 + pos2) / 2
 //        } else if (encoder1.velocity == 0.0) {
@@ -85,33 +85,47 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
         object FIND_EDGE : State()
         sealed class PID: State() {
             abstract val pos: Int
+            abstract val vel: Double
+            abstract val accel: Double
         }
-        data class RunTo(override val pos: Int): PID()
+        data class RunTo(override val pos: Int): PID() {
+            override val vel: Double = 0.0
+            override val accel: Double = 0.0
+        }
         class Profiled(val profile: TrapezoidalProfile): PID() {
             private var startTime: Duration? = null
-            override val pos: Int
-                get() {
-                    val now = Duration.sinceJvmTime()
-                    val s = startTime
-                    val t = if (s == null) {
-                        startTime = now
-                        0.0
-                    } else {
-                        (now - s).toDouble(DurationUnit.SECONDS)
-                    }
-                    return profile.position(t).roundToInt()
+            val t: Double get() {
+                val now = Duration.sinceJvmTime()
+                val s = startTime
+                return if (s == null) {
+                    startTime = now
+                    0.0
+                } else {
+                    (now - s).toDouble(DurationUnit.SECONDS)
                 }
+            }
+            override val pos: Int
+                get() = profile.position(t).roundToInt()
+            override val vel: Double
+                get() = profile.velocity(t)
+            override val accel: Double
+                get() = profile.acceleration(t)
         }
         data class Hold(val pos: Int, val isManual: Boolean): State()
         data class Manual(val velocity: Double): State()
     }
 
     fun profileTo(target: Int) {
-        state = State.Profiled(TrapezoidalProfile(getPosition().toDouble(), target.toDouble(), MAX_VEL, MAX_ACCEL))
+        val profile = TrapezoidalProfile(getPosition().toDouble(), target.toDouble(), MAX_VEL, MAX_ACCEL)
+        log.out["slides profile length"] = profile.length()
+        state = State.Profiled(profile)
     }
 
     fun runTo(target: Int) {
-        state = State.RunTo(target)
+        if (PROFILED)
+            profileTo(target)
+        else
+            state = State.RunTo(target)
     }
 
     @Config
@@ -195,6 +209,10 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
             else -> state
         }
 
+        val position = getPosition().toDouble()
+        val velocity = encoder2.velocity
+        log.out["slides measured position"] = position
+        log.out["slides measured velocity"] = velocity
         when (state) {
             State.ZERO -> {
 //                if (getPosition() > BRAKE_HEIGHT) {
@@ -220,29 +238,38 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
             is State.PID -> {
                 setZpb(Motor.ZeroPowerBehavior.BRAKE)
                 runToController.targetPosition = state.pos.toDouble()
-                runToController.targetVelocity = 0.0
-                runToController.targetAcceleration = 0.0
-                val position = getPosition().toDouble()
+                runToController.targetVelocity = state.vel
+                runToController.targetAcceleration = state.accel
                 var roundedPosition = position
-                if (position < INSIDE_BOT && (position - state.pos.toDouble()).absoluteValue < SAME_THRESHOLD) {
+                var roundedVelocity = velocity
+                val error = position - state.pos.toDouble()
+                if (position < INSIDE_BOT && error.absoluteValue < SAME_THRESHOLD) {
                     roundedPosition = state.pos.toDouble()
+                }
+                if (error < NO_VELO_TRESHOLD) {
+                    roundedVelocity = 0.0
                 }
                 val output = runToController.update(
                     measuredPosition = roundedPosition,
+                    measuredVelocity = roundedVelocity,
                 )
-                log.out["slides target"] = state.pos
-                log.out["slides position"] = position
+                log.out["slides target position"] = state.pos
+                log.out["slides target velocity"] = state.vel
                 log.out["slides PID output"] = output
-                log.out["slides static term"] = LIFT_KB + LIFT_KH * state.pos
-                var power = max(DROP_POWER, output + LIFT_KB + LIFT_KH * state.pos)
-                if (position < INSIDE_BOT) {
-                    if (power > 0.0)
-                        power += BOT_FRICTION
-                    else {
-                        power = max(INSIDE_DROP_POWER, power)
-                        //setZpb(INSIDE_DROP_MODE)
-                    }
+                var static = LIFT_KB + LIFT_KH * state.pos
+                if (output.absoluteValue < MIN_STATIC) {
+                    static *= output.absoluteValue / MIN_STATIC
                 }
+                log.out["slides static term"] = static
+                var power = max(DROP_POWER, output + static)
+//                if (position < INSIDE_BOT) {
+//                    if (power > 0.0)
+//                        power += BOT_FRICTION
+//                    else {
+//                        power = max(INSIDE_DROP_POWER, power)
+//                        //setZpb(INSIDE_DROP_MODE)
+//                    }
+//                }
                 setPower(power)
             }
             is State.Manual -> {
@@ -267,16 +294,17 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
 
         @JvmField var LIFT_RUN_TO_PID = PIDCoefficients(
             kP = 0.008,
-            kD = 0.0005
+            kD = 0.0004
         )
-        @JvmField var LIFT_KV = 1.0
-        @JvmField var LIFT_KA = 0.0
+        @JvmField var LIFT_KV = 0.0008
+        @JvmField var LIFT_KA = 0.00007
 
-        @JvmField var LIFT_KS = 0.0
-        @JvmField var LIFT_KB = 0.0
-        @JvmField var LIFT_KH = 0.00045
+        @JvmField var LIFT_KS = 0.1
+        @JvmField var LIFT_KB = 0.1
+        @JvmField var LIFT_KH = 0.0000
 
         @JvmField var SAME_THRESHOLD = 10
+        @JvmField var NO_VELO_TRESHOLD = 50
 
         @JvmField var BRAKE_HEIGHT = 0
         @JvmField var DROP_POWER = -1.0
@@ -291,9 +319,15 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
         @JvmField var INSIDE_BOT = 260
         @JvmField var INSIDE_DROP_POWER = -1.0
         //@JvmField var INSIDE_DROP_MODE = Motor.ZeroPowerBehavior.BRAKE
-        @JvmField var BOT_FRICTION = 0.1
+        @JvmField var BOT_FRICTION = 0.0
 
-        @JvmField var MAX_ACCEL = 5000.0
-        @JvmField var MAX_VEL = 1000.0
+        @JvmField var VELO_THRESHOLD = 10.0
+
+        @JvmField var MAX_ACCEL = 6000.0
+        @JvmField var MAX_VEL = 1500.0
+
+        @JvmField var PROFILED = true
+
+        @JvmField var MIN_STATIC = 0.1
     }
 }

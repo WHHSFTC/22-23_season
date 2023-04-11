@@ -15,6 +15,14 @@ class TrapezoidalProfile(val start: Double, val end: Double, val maxVel: Double,
     val plateauTime = plateauDistance / maxVel
     val plateauVel = rampTime * maxAccel
 
+    fun acceleration(t: Double): Double {
+        if (t < 0.0) return 0.0
+        if (t < rampTime) return maxAccel
+        if (t < rampTime + plateauTime) return 0.0
+        if (t < rampTime + plateauTime + rampTime) return -maxAccel
+        return 0.0
+    }
+
     fun velocity(t: Double): Double {
         if (t < 0.0) return 0.0
         if (t < rampTime) return t * maxAccel * sign
