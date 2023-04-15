@@ -2,8 +2,12 @@ package org.thenuts.powerplay.subsystems
 
 import android.graphics.Color
 import com.acmerobotics.dashboard.config.Config
+import com.acmerobotics.roadrunner.geometry.Pose2d
+import com.acmerobotics.roadrunner.geometry.Vector2d
 import com.qualcomm.hardware.rev.RevColorSensorV3
 import com.qualcomm.robotcore.hardware.HardwareMap
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit
+import org.thenuts.powerplay.opmode.tele.toRadians
 import org.thenuts.switchboard.core.Logger
 import kotlin.math.max
 
@@ -23,6 +27,11 @@ class TapeDetector(val log: Logger?, hwMap: HardwareMap) {
         state = TapeState.DISABLED
         leftSensor.enableLed(false)
         rightSensor.enableLed(false)
+    }
+
+    fun reset() {
+        enable()
+        state = TapeState.MISSING
     }
 
     fun enable() {
@@ -67,11 +76,29 @@ class TapeDetector(val log: Logger?, hwMap: HardwareMap) {
             else -> TapeState.MISSING
         }
 
+        log?.let { it.out["TAPE STATE"] = state }
+
         return state
     }
 
     companion object {
         @JvmField var BLUE_THRESHOLD = 0.004
         @JvmField var RED_THRESHOLD = 0.003
+        @JvmField var STACK_APPROACH_X = 0.25
+        @JvmField var STACK_ADJUST_X = 0.0
+        @JvmField var STACK_ADJUST_Y = 0.1
+        @JvmField var STACK_FAR_X = 0.0
+        @JvmField var STACK_FAR_Y = 0.3
+        @JvmField var STACK_HEADING_ERROR = 10.0.toRadians()
+
+        fun suggestedCorrection(tapeState: TapeState): Vector2d? = when (tapeState) {
+            TapeState.CENTERED -> Vector2d(-STACK_APPROACH_X, 0.0)
+            TapeState.LEFT -> Vector2d(-STACK_ADJUST_X, STACK_ADJUST_Y)
+            TapeState.RIGHT -> Vector2d(-STACK_ADJUST_X, -STACK_ADJUST_Y)
+            TapeState.FAR_LEFT -> Vector2d(-STACK_FAR_X, STACK_FAR_Y)
+            TapeState.FAR_RIGHT -> Vector2d(-STACK_FAR_X, -STACK_FAR_Y)
+            else -> null
+        }
+
     }
 }

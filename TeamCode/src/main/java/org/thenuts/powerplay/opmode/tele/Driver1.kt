@@ -11,11 +11,15 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit
 import org.thenuts.powerplay.acme.drive.DriveConstants.*
 import org.thenuts.powerplay.acme.drive.SampleMecanumDrive.LATERAL_MULTIPLIER
 import org.thenuts.powerplay.opmode.auto.angleWrap
+import org.thenuts.powerplay.opmode.commands.PassthruOutputCommand
 import org.thenuts.powerplay.subsystems.October
 import org.thenuts.powerplay.subsystems.TapeDetector
+import org.thenuts.powerplay.subsystems.TapeDetector.Companion.STACK_HEADING_ERROR
+import org.thenuts.powerplay.subsystems.output.Output
 import org.thenuts.powerplay.subsystems.output.VerticalSlides
 import org.thenuts.switchboard.command.Command
 import org.thenuts.switchboard.command.combinator.SlotCommand
+import org.thenuts.switchboard.dsl.mkSequential
 import org.thenuts.switchboard.util.EPSILON
 import org.thenuts.switchboard.util.Frame
 import org.thenuts.switchboard.util.epsilonReduce
@@ -25,16 +29,14 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 
 @Config
-class Driver1(val gamepad: Gamepad, val bot: October) : Command {
+class Driver1(val gamepad: Gamepad, val bot: October, val outputSlot: SlotCommand) : Command {
     override val done: Boolean = false
     val prev = Gamepad()
     val pad = Gamepad()
 
-    val intakeSlot = SlotCommand()
-
     override val postreqs: List<Pair<Command, Int>> = listOf(bot.drive to 10, /* bot.intake to 10, */ /* bot.intake.slides to 10 */)
 
-    var targetHeading = 0.0
+    var targetHeading = bot.drive.poseEstimate.heading
     var currentPov = 0.0
 
     fun accelConstraint(): Triple<ClosedRange<Double>, ClosedRange<Double>, ClosedRange<Double>> {
@@ -80,11 +82,26 @@ class Driver1(val gamepad: Gamepad, val bot: October) : Command {
     }
 
     override fun update(frame: Frame) {
+        pad.safeCopy(gamepad)
         controls(frame)
-        intakeSlot.update(frame)
+        if (pad.shift())
+            output(frame)
+        prev.safeCopy(pad)
     }
 
-//    var stackHeight = 5
+    fun output(frame: Frame) {
+        if (pad.dpad_up && !prev.dpad_up) {
+            outputSlot.interrupt(PassthruOutputCommand(bot, VerticalSlides.Height.HIGH.pos))
+        } else if (pad.dpad_left && !prev.dpad_left) {
+            outputSlot.interrupt(PassthruOutputCommand(bot, VerticalSlides.Height.MID.pos))
+        } else if (pad.dpad_right && !prev.dpad_right) {
+            outputSlot.interrupt(PassthruOutputCommand(bot, VerticalSlides.Height.MID.pos))
+        } else if (pad.dpad_down && !prev.dpad_down) {
+            outputSlot.interrupt(PassthruOutputCommand(bot, VerticalSlides.Height.LOW.pos))
+        }
+    }
+
+    //    var stackHeight = 5
 //    var prevIntake = false
     var lockTime: Duration? = null
 
@@ -103,14 +120,12 @@ class Driver1(val gamepad: Gamepad, val bot: October) : Command {
     var prevDriveSignal = DriveSignal()
 
     fun controls(frame: Frame) {
-        pad.safeCopy(gamepad)
-
-        val limits = accelConstraint()
+//        val limits = accelConstraint()
 
         val dt = frame.step.toDouble(DurationUnit.SECONDS).coerceAtLeast(EPSILON)
-        val xRange = limits.first * dt + prevDriveSignal.vel.x
-        val yRange = limits.second * dt + prevDriveSignal.vel.y
-        val turningRange = limits.third * dt + prevDriveSignal.vel.heading
+//        val xRange = limits.first * dt + prevDriveSignal.vel.x
+//        val yRange = limits.second * dt + prevDriveSignal.vel.y
+//        val turningRange = limits.third * dt + prevDriveSignal.vel.heading
 
         val x = -pad.left_stick_y.toDouble()
         val y = -pad.left_stick_x.toDouble()
@@ -136,15 +151,15 @@ class Driver1(val gamepad: Gamepad, val bot: October) : Command {
             targetHeading = bot.drive.poseEstimate.heading.angleWrap()
         }
 
-        if (pad.dpad_up && !prev.dpad_up) {
-            targetHeading = 0.0
-        } else if (pad.dpad_down && !prev.dpad_down) {
-            targetHeading = PI
-        } else if (pad.dpad_left && !prev.dpad_left) {
-            targetHeading = PI/2.0
-        } else if (pad.dpad_right && !prev.dpad_right) {
-            targetHeading = -PI/2.0
-        }
+//        if (pad.dpad_up && !prev.dpad_up) {
+//            targetHeading = 0.0
+//        } else if (pad.dpad_down && !prev.dpad_down) {
+//            targetHeading = PI
+//        } else if (pad.dpad_left && !prev.dpad_left) {
+//            targetHeading = PI/2.0
+//        } else if (pad.dpad_right && !prev.dpad_right) {
+//            targetHeading = -PI/2.0
+//        }
 
         if (pad.x) {
             targetHeading = -PI/2.0
@@ -181,23 +196,19 @@ class Driver1(val gamepad: Gamepad, val bot: October) : Command {
 //                else
 //                    Vector2d(-pow, 0.0)
 //            }
-            if ((pad.x || pad.b || pad.a) && error < STACK_HEADING_ERROR) {
-                val tape = bot.tapeDetector.read()
-                translation = when (tape) {
-                    TapeDetector.TapeState.CENTERED -> {
-                        val dist = bot.intakeSensor.getDistance(DistanceUnit.INCH)
-                        bot.log.out["intake dist"] = dist
-                        val pow = STACK_APPROACH_MIN + dist.coerceIn(STACK_DIST, 18.0) / (18.0 - STACK_DIST) * (STACK_APPROACH_MAX - STACK_APPROACH_MIN)
-                        if (dist < STACK_DIST)
-                            translation
-                        else
-                            Vector2d(-pow, 0.0)
+            if ((pad.x || pad.b || pad.a) && error.absoluteValue < STACK_HEADING_ERROR) {
+                val dist = bot.intakeSensor.getDistance(DistanceUnit.INCH)
+                bot.log.out["intake dist"] = dist
+                var pow = STACK_APPROACH_MIN + dist.coerceIn(STACK_DIST, 18.0) / (18.0 - STACK_DIST) * (STACK_APPROACH_MAX - STACK_APPROACH_MIN)
+                if (dist > STACK_DIST) {
+                    val correct = TapeDetector.suggestedCorrection(bot.tapeDetector.read())
+                    if (correct != null) {
+                        if (correct.y == 0.0) {
+                            translation = Vector2d(pow, 0.0)
+                        } else {
+                            translation = Vector2d(min(pow, correct.x), correct.y)
+                        }
                     }
-                    TapeDetector.TapeState.LEFT -> Vector2d(-STACK_ADJUST_X, STACK_ADJUST_Y)
-                    TapeDetector.TapeState.RIGHT -> Vector2d(-STACK_ADJUST_X, -STACK_ADJUST_Y)
-                    TapeDetector.TapeState.FAR_LEFT -> Vector2d(-STACK_FAR_X, STACK_FAR_Y)
-                    TapeDetector.TapeState.FAR_RIGHT -> Vector2d(-STACK_FAR_X, -STACK_FAR_Y)
-                    else -> translation
                 }
             }
         }
@@ -220,7 +231,7 @@ class Driver1(val gamepad: Gamepad, val bot: October) : Command {
             scaledTranslation.y//.coerceIn(yRange)
         )
 
-        val vel = Pose2d(
+val vel = Pose2d(
             limitedTranslation,
             omega
         )
@@ -307,8 +318,6 @@ class Driver1(val gamepad: Gamepad, val bot: October) : Command {
 //        }
 //
 //        bot.log.out["intake distance"] = ticksToInches(bot.intake.slides.encoder.position.toDouble())
-
-        prev.safeCopy(pad)
     }
 
     fun Double.smooth(inputDeadzone: Double = INPUT_DEADZONE, exponent: Double = EXPONENT, min: Double = 0.0, max: Double = 1.0): Double {
@@ -371,11 +380,8 @@ class Driver1(val gamepad: Gamepad, val bot: October) : Command {
         @JvmField var STACK_APPROACH_MAX = 0.5
         @JvmField var STACK_APPROACH_MIN = 0.2
         @JvmField var STACK_DIST = 2.0
-        @JvmField var STACK_ADJUST_X = 0.2
-        @JvmField var STACK_ADJUST_Y = 0.25
-        @JvmField var STACK_FAR_X = 0.0
-        @JvmField var STACK_FAR_Y = 0.8
-        @JvmField var STACK_HEADING_ERROR = 10.0.toRadians()
+
+        @JvmField var D1_OUTPUT = false
     }
 }
 

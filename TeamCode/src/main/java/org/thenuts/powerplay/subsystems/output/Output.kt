@@ -180,7 +180,7 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
     override val outputs: List<HardwareOutput> = listOf(claw, leftArm, rightArm) + lift.outputs
 
     override fun update(frame: Frame) {
-        log.out["arm target"] = profiledServo.profile?.position(profiledServo.time())
+        log.out["arm target"] = profiledServo.profile?.get(profiledServo.time())?.x
         log.out["arm position"] = profiledServo.servo.position
     }
 

@@ -116,7 +116,10 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
     }
 
     fun profileTo(target: Int) {
-        val profile = TrapezoidalProfile(getPosition().toDouble(), target.toDouble(), MAX_VEL, MAX_ACCEL)
+        val pos = getPosition()
+        val vel = if (target > pos) MAX_UP_VEL else MAX_DOWN_VEL
+        val accel = if (target > pos) MAX_UP_ACCEL else MAX_DOWN_ACCEL
+        val profile = TrapezoidalProfile(pos.toDouble(), target.toDouble(), vel, accel)
         log.out["slides profile length"] = profile.length()
         state = State.Profiled(profile)
     }
@@ -171,9 +174,11 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
         runToController.reset()
     }
 
+    val velocityWindow = MutableList(VELO_WINDOW) { 0.0 }
+
     override fun update(frame: Frame) {
         var state = state
-        log.out["lift state"] = state
+        log.out["lift state"] = state.toString()
         state = when (state) {
             State.ZERO, is State.Manual -> {
                 if (leftSwitch.pressed || rightSwitch.pressed) {
@@ -211,8 +216,13 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
 
         val position = getPosition().toDouble()
         val velocity = encoder2.velocity
+        velocityWindow.removeAt(0)
+        velocityWindow.add(velocity)
+        val smoothedVelocity = velocityWindow.average()
+
         log.out["slides measured position"] = position
         log.out["slides measured velocity"] = velocity
+        log.out["slides smoothed velocity"] = smoothedVelocity
         when (state) {
             State.ZERO -> {
 //                if (getPosition() > BRAKE_HEIGHT) {
@@ -242,11 +252,12 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
                 runToController.targetAcceleration = state.accel
                 var roundedPosition = position
                 var roundedVelocity = velocity
+//                var roundedVelocity = smoothedVelocity
                 val error = position - state.pos.toDouble()
                 if (position < INSIDE_BOT && error.absoluteValue < SAME_THRESHOLD) {
                     roundedPosition = state.pos.toDouble()
                 }
-                if (error < NO_VELO_TRESHOLD) {
+                if (error.absoluteValue < NO_VELO_TRESHOLD/* || velocity.absoluteValue < VELO_ZERO*/) {
                     roundedVelocity = 0.0
                 }
                 val output = runToController.update(
@@ -262,14 +273,14 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
                 }
                 log.out["slides static term"] = static
                 var power = max(DROP_POWER, output + static)
-//                if (position < INSIDE_BOT) {
-//                    if (power > 0.0)
-//                        power += BOT_FRICTION
-//                    else {
-//                        power = max(INSIDE_DROP_POWER, power)
-//                        //setZpb(INSIDE_DROP_MODE)
-//                    }
-//                }
+                if (position < INSIDE_BOT) {
+                    if (power > 0.0)
+                        power += BOT_FRICTION
+                    else {
+                        power = max(INSIDE_DROP_POWER, power)
+                        //setZpb(INSIDE_DROP_MODE)
+                    }
+                }
                 setPower(power)
             }
             is State.Manual -> {
@@ -323,11 +334,16 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
 
         @JvmField var VELO_THRESHOLD = 10.0
 
-        @JvmField var MAX_ACCEL = 6000.0
-        @JvmField var MAX_VEL = 1500.0
+        @JvmField var MAX_UP_ACCEL = 6000.0
+        @JvmField var MAX_DOWN_ACCEL = 3000.0
+        @JvmField var MAX_UP_VEL = 1500.0
+        @JvmField var MAX_DOWN_VEL = 1000.0
 
         @JvmField var PROFILED = true
 
         @JvmField var MIN_STATIC = 0.1
+
+        @JvmField var VELO_WINDOW = 10
+        @JvmField var VELO_ZERO = 10.0
     }
 }

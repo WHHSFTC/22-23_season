@@ -9,6 +9,7 @@ import org.thenuts.powerplay.subsystems.October
 import org.thenuts.switchboard.command.Command
 import org.thenuts.switchboard.command.CommandScheduler
 import org.thenuts.switchboard.util.sinceJvmTime
+import kotlin.math.PI
 import kotlin.time.Duration
 
 abstract class OctoberAuto : CommandLinearOpMode<October>(::October, Alliance.RED, Mode.AUTO) {
@@ -23,7 +24,8 @@ abstract class OctoberAuto : CommandLinearOpMode<October>(::October, Alliance.RE
 
         bot.output.lift.zeroPosition()
 
-        KalmanLocalizer.TELE_HEADING_OFFSET = bot.drive.rawExternalHeading
+        bot.drive.externalHeading = PI
+        KalmanLocalizer.TELE_HEADING_OFFSET = (bot.drive.rawExternalHeading - bot.drive.externalHeading).angleWrap()
 
         cmd = generateCommand()
     }

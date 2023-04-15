@@ -31,7 +31,7 @@ class OctoberTele : CommandLinearOpMode<October>(::October, Alliance.RED, Mode.T
         outputSlot = SlotCommand(postreqs = listOf(bot.output to 10, bot.output.lift to 10))
 
         sched.addCommand(outputSlot)
-        sched.addCommand(Driver1(gamepad1, bot))
+        sched.addCommand(Driver1(gamepad1, bot, outputSlot))
         sched.addCommand(Driver2(gamepad2, bot, outputSlot))
 
         while (WAIT && Duration.sinceJvmTime() < GlobalState.autoStartTime + WAIT_TIME.seconds && !gamepad1.start && !isStopRequested) {

@@ -13,11 +13,11 @@ import org.thenuts.switchboard.dsl.mkSequential
 import kotlin.math.PI
 import kotlin.time.Duration.Companion.milliseconds
 
-abstract class SideHighAuto(right: Boolean): CyclingAuto(right) {
+abstract class SideHighAuto(right: Boolean, val tape: Boolean): CyclingAuto(right) {
     override fun generateCommand(): Command {
         val startPose = Pose2d(0.0, 5.0, PI)
         val intakePose = Pose2d(if (right) 49.0 else 50.0, if (right) -25.5 else 24.25, if (right) PI /2.0 else -PI /2.0)
-        val samesidePose = Pose2d(if (right) 50.0 else 50.0, if (right) 11.5 else -13.0, if (right) PI else PI)
+        val samesidePose = Pose2d(if (right) 50.0 else 50.0, if (right) 13.0 else -13.0, if (right) PI else PI)
         val sideHigh = Pose2d(if (right) 55.0 else 57.0, if (right) 5.0 else -7.0, if (right) PI /4.0 else -PI /4.0)
 
         fun driveToOutput(): Command =
@@ -25,11 +25,11 @@ abstract class SideHighAuto(right: Boolean): CyclingAuto(right) {
                 setTangent((MIDDLE))
                 splineTo(sideHigh.vec(), sideHigh.heading)
             }
-        fun driveToIntake(): Command =
+        fun driveToIntake(): Command = wrapWithTape(intakePose, tape,
             TrajectorySequenceCommand(bot.drive, sideHigh, quickExit = true) {
                 setReversed(true)
                 splineTo(intakePose.vec(), SIDE)
-            }
+            })
 
 
         val junctions = listOf(
@@ -43,9 +43,15 @@ abstract class SideHighAuto(right: Boolean): CyclingAuto(right) {
         bot.drive.poseEstimate = startPose
 
         return mkSequential {
-            add(samesideOutput(VerticalSlides.Height.HIGH.pos, startPose, samesidePose))
+            add(pushSignal(startPose, samesidePose, VerticalSlides.Height.HIGH.pos))
+            add(samesideOutput(VerticalSlides.Height.HIGH.pos))
+            add(wrapWithTape(intakePose, tape, samesideToStack(samesidePose, intakePose)))
 
-            add(cycle(samesidePose, intakePose, 5, junctions))
+            if (tape) {
+                add(cycle(5, junctions.subList(0, 4)))
+            } else {
+                add(cycle(5, junctions))
+            }
 
             task { bot.output.arm.state = Output.ArmState.INTAKE }
             task { bot.output.lift.runTo(0) }
@@ -88,7 +94,13 @@ abstract class SideHighAuto(right: Boolean): CyclingAuto(right) {
 }
 
 @Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
-class LeftSideHigh: SideHighAuto(false)
+class LeftSideHigh: SideHighAuto(false, false)
 
 @Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
-class RightSideHigh: SideHighAuto(true)
+class RightSideHigh: SideHighAuto(true, false)
+
+@Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
+class LeftSideHighTape: SideHighAuto(false, true)
+
+@Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
+class RightSideHighTape: SideHighAuto(true, true)

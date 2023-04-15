@@ -42,9 +42,11 @@ abstract class SideMidAuto(right: Boolean): CyclingAuto(right) {
         bot.drive.poseEstimate = startPose
 
         return mkSequential {
-            add(samesideOutput(VerticalSlides.Height.HIGH.pos, startPose, samesidePose))
+            add(pushSignal(startPose, samesidePose, VerticalSlides.Height.HIGH.pos))
+            add(samesideOutput(VerticalSlides.Height.HIGH.pos))
+            add(samesideToStack(samesidePose, intakePose))
 
-            add(cycle(samesidePose, intakePose, 5, junctions))
+            add(cycle(5, junctions))
 
             task { bot.output.arm.state = Output.ArmState.INTAKE }
             task { bot.output.lift.runTo(0) }

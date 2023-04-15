@@ -1,9 +1,12 @@
 package org.thenuts.powerplay.opmode
 
 import com.acmerobotics.dashboard.FtcDashboard
+import com.acmerobotics.dashboard.config.Config
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode
+import com.qualcomm.robotcore.hardware.VoltageSensor
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit
 import org.thenuts.powerplay.game.Alliance
 import org.thenuts.powerplay.game.Mode
 import org.thenuts.powerplay.subsystems.Robot
@@ -17,9 +20,11 @@ import java.util.LinkedList
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 
+@Config
 abstract class CommandLinearOpMode<T: Robot>(val robotSupplier: (Logger, Configuration, Alliance, Mode) -> T, val alliance: Alliance, val mode: Mode) : LinearOpMode() {
     lateinit var log: Logger
     lateinit var config: Configuration
+    lateinit var batteryVoltageSensor: VoltageSensor
     lateinit var bot: T
 
     val sched = CommandScheduler()
@@ -40,7 +45,7 @@ abstract class CommandLinearOpMode<T: Robot>(val robotSupplier: (Logger, Configu
     companion object DashboardReceiver : Logger.LogReceiver {
         var ENABLED = false
 
-        val dash = FtcDashboard.getInstance()
+        val dash: FtcDashboard by lazy { FtcDashboard.getInstance() }
         var packet: TelemetryPacket = TelemetryPacket()
         init {
             packet = TelemetryPacket()
@@ -54,6 +59,10 @@ abstract class CommandLinearOpMode<T: Robot>(val robotSupplier: (Logger, Configu
             dash.sendTelemetryPacket(packet)
             packet = TelemetryPacket()
         }
+
+        @JvmField var initKeys = ""
+        @JvmField var coachKeys = ""
+        @JvmField var filter = false
     }
 
     override fun runOpMode() {
@@ -64,7 +73,12 @@ abstract class CommandLinearOpMode<T: Robot>(val robotSupplier: (Logger, Configu
         log = Logger(telemetry)
         log.addReceiver(DashboardReceiver)
         config = Configuration(hardwareMap, log)
+        batteryVoltageSensor = config.hwMap.voltageSensor.iterator().next()
         bot = robotSupplier(log, config, alliance, mode)
+
+        initKeys.split(",").forEach {
+            log.out[it] = 0.0
+        }
 
         initTime = Duration.sinceJvmTime()
         sched.clear()
@@ -110,7 +124,20 @@ abstract class CommandLinearOpMode<T: Robot>(val robotSupplier: (Logger, Configu
         recentSteps.add(step)
         log.out["STEP"] = recentSteps.average()
         log.out["RUNTIME"] = runtime
+
+        for (i in config.revHubs.indices) {
+            log.out["current $i"] = config.revHubs[i].getCurrent(CurrentUnit.AMPS)
+        }
+        log.out["voltage"] = batteryVoltageSensor.voltage
+
         sched.update(frame)
+        if (filter) {
+            val keys = coachKeys.split(",")
+            keys.forEach {
+                log.out.mutableMap.remove(it)
+                log.out.suppliers.remove(it)
+            }
+        }
         log.update()
         idle()
     }

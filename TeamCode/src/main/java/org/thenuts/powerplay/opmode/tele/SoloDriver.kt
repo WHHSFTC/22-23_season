@@ -16,7 +16,7 @@ class SoloDriver(val gamepad: Gamepad, val bot: October, val outputSlot: SlotCom
     val pad1 = Gamepad()
     val pad2 = Gamepad()
 
-    val d1 = Driver1(pad1, bot)
+    val d1 = Driver1(pad1, bot, outputSlot)
     val d2 = Driver2(pad2, bot, outputSlot)
 
     override val prereqs = d1.prereqs + d2.prereqs
@@ -30,8 +30,13 @@ class SoloDriver(val gamepad: Gamepad, val bot: October, val outputSlot: SlotCom
         pad1.dpad_up = false
         pad1.dpad_left = false
         pad1.dpad_right = false
+        pad1.a = false
+        pad1.b = false
+        pad1.x = false
+        pad1.y = false
         pad1.left_bumper = false
         pad1.right_bumper = false
+
         d1.update(frame)
         d2.update(frame)
     }

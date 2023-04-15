@@ -3,6 +3,7 @@ package org.thenuts.powerplay.opmode.auto
 import com.acmerobotics.roadrunner.geometry.Pose2d
 import com.acmerobotics.roadrunner.geometry.Vector2d
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous
+import com.qualcomm.robotcore.eventloop.opmode.Disabled
 import org.thenuts.powerplay.game.Signal
 import org.thenuts.powerplay.opmode.commands.TrajectorySequenceCommand
 import org.thenuts.powerplay.opmode.commands.go
@@ -44,9 +45,11 @@ abstract class NearHighAuto(right: Boolean): CyclingAuto(right) {
         bot.drive.poseEstimate = startPose
 
         return mkSequential {
-            add(samesideOutput(VerticalSlides.Height.HIGH.pos, startPose, samesidePose))
+            add(pushSignal(startPose, samesidePose, VerticalSlides.Height.HIGH.pos))
+            add(samesideOutput(VerticalSlides.Height.HIGH.pos))
+            add(samesideToStack(samesidePose, intakePose))
 
-            add(cycle(samesidePose, intakePose, 5, junctions))
+            add(cycle(5, junctions))
 
             task { bot.output.arm.state = Output.ArmState.INTAKE }
             task { bot.output.lift.runTo(0) }
@@ -90,8 +93,10 @@ abstract class NearHighAuto(right: Boolean): CyclingAuto(right) {
     }
 }
 
+@Disabled
 @Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
 class LeftNearHigh: NearHighAuto(false)
 
+@Disabled
 @Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
 class RightNearHigh: NearHighAuto(true)
