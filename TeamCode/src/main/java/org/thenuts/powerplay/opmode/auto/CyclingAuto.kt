@@ -223,7 +223,7 @@ abstract class CyclingAuto(val right: Boolean) : OctoberAuto() {
         @JvmField var HEADING_THRESHOLD: Double = 10.0.toRadians()
 
         @JvmField var DIST_PID: PIDCoefficients = PIDCoefficients(11.0, 0.0, 1.0)
-        @JvmField var DIST_THRESHOLD: Double = 0.25
+        @JvmField var DIST_THRESHOLD: Double = 0.5
         @JvmField var DIST_TARGET: Double = 1.75
     }
 

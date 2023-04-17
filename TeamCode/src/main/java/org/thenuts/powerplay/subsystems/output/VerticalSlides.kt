@@ -138,7 +138,7 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
         MIN_CLEAR(0), ABOVE_STACK(250),
 
         TERMINAL(38), GROUND(38),
-        LOW(0), MID(335), HIGH(660);
+        LOW(0), MID(370), HIGH(685);
     }
 
     val isBusy: Boolean
@@ -315,7 +315,7 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
         @JvmField var LIFT_KH = 0.0000
 
         @JvmField var SAME_THRESHOLD = 10
-        @JvmField var NO_VELO_TRESHOLD = 50
+        @JvmField var NO_VELO_TRESHOLD = 10
 
         @JvmField var BRAKE_HEIGHT = 0
         @JvmField var DROP_POWER = -1.0
@@ -335,9 +335,9 @@ class VerticalSlides(val log: Logger, config: Configuration) : Subsystem {
         @JvmField var VELO_THRESHOLD = 10.0
 
         @JvmField var MAX_UP_ACCEL = 6000.0
-        @JvmField var MAX_DOWN_ACCEL = 3000.0
+        @JvmField var MAX_DOWN_ACCEL = 6000.0
         @JvmField var MAX_UP_VEL = 1500.0
-        @JvmField var MAX_DOWN_VEL = 1000.0
+        @JvmField var MAX_DOWN_VEL = 1500.0
 
         @JvmField var PROFILED = true
 
