@@ -16,9 +16,9 @@ import kotlin.time.Duration.Companion.milliseconds
 abstract class SideHighAuto(right: Boolean, val tape: Boolean): CyclingAuto(right) {
     override fun generateCommand(): Command {
         val startPose = Pose2d(0.0, 5.0, PI)
-        val intakePose = Pose2d(if (right) 49.0 else 50.0, if (right) -25.5 else 24.25, if (right) PI /2.0 else -PI /2.0)
-        val samesidePose = Pose2d(if (right) 50.0 else 50.0, if (right) 13.0 else -13.0, if (right) PI else PI)
-        val sideHigh = Pose2d(if (right) 55.0 else 57.0, if (right) 5.0 else -7.0, if (right) PI /4.0 else -PI /4.0)
+        val intakePose = Pose2d(if (right) 47.5 else 51.0, if (right) -26.0 else 24.25, if (right) PI /2.0 else -PI /2.0)
+        val samesidePose = Pose2d(if (right) 50.0 else 49.0, if (right) 10.5 else -14.5, if (right) PI else PI)
+        val sideHigh = Pose2d(if (right) 55.0 else 56.0, if (right) 5.0 else -9.0, if (right) PI /4.0 else -PI /4.0)
 
         fun driveToOutput(): Command =
             TrajectorySequenceCommand(bot.drive, intakePose, quickExit = true) {
@@ -45,7 +45,13 @@ abstract class SideHighAuto(right: Boolean, val tape: Boolean): CyclingAuto(righ
         return mkSequential {
             add(pushSignal(startPose, samesidePose, VerticalSlides.Height.HIGH.pos))
             add(samesideOutput(VerticalSlides.Height.HIGH.pos))
-            add(wrapWithTape(intakePose, tape, samesideToStack(samesidePose, intakePose)))
+            par {
+                add(wrapWithTape(intakePose, tape, samesideToStack(samesidePose, intakePose)))
+                seq {
+                    delay(500.milliseconds)
+                    task { bot.output.lift.runTo(VerticalSlides.Height.FIVE.pos) }
+                }
+            }
 
             if (tape) {
                 add(cycle(5, junctions.subList(0, 4)))
@@ -58,15 +64,26 @@ abstract class SideHighAuto(right: Boolean, val tape: Boolean): CyclingAuto(righ
 
             switch({ bot.vision?.signal?.finalTarget ?: Signal.MID }) {
                 value(Signal.LEFT) {
-                    go(bot.drive, sideHigh, quickExit = true) {
-                        setReversed(true)
-                        splineTo(Vector2d(51.0, 0.0), SIDE)
-                        addDisplacementMarker {
-                            bot.output.claw.state = Output.ClawState.CLOSED
-                            bot.output.arm.state = Output.ArmState.CLEAR
+                    if (right)
+                        go(bot.drive, sideHigh, quickExit = true) {
+                            setReversed(true)
+                            splineTo(Vector2d(48.0, 0.0), SIDE)
+                            addDisplacementMarker {
+                                bot.output.claw.state = Output.ClawState.CLOSED
+                                bot.output.arm.state = Output.ArmState.PARK
+                            }
+                            splineToSplineHeading(Pose2d(51.0, 24.0, -SIDE), PI /2.0)
                         }
-                        splineToSplineHeading(Pose2d(51.0, 24.0, -SIDE), PI /2.0)
-                    }
+                    else
+                        go(bot.drive, sideHigh, quickExit = true) {
+                            setReversed(true)
+                            splineTo(Vector2d(48.0, 0.0), SIDE)
+                            addDisplacementMarker {
+                                bot.output.claw.state = Output.ClawState.CLOSED
+                                bot.output.arm.state = Output.ArmState.PARK
+                            }
+                            splineToSplineHeading(Pose2d(51.0, 24.0, -SIDE), PI /2.0)
+                        }
                 }
                 value(Signal.MID) { // MID or null
                     go(bot.drive, sideHigh, quickExit = true) {
@@ -76,15 +93,26 @@ abstract class SideHighAuto(right: Boolean, val tape: Boolean): CyclingAuto(righ
                     }
                 }
                 value(Signal.RIGHT) {
-                    go(bot.drive, sideHigh, quickExit = true) {
-                        setReversed(true)
-                        splineTo(Vector2d(51.0, 0.0), SIDE)
-                        addDisplacementMarker {
-                            bot.output.claw.state = Output.ClawState.CLOSED
-                            bot.output.arm.state = Output.ArmState.CLEAR
+                    if (right)
+                        go(bot.drive, sideHigh, quickExit = true) {
+                            setReversed(true)
+                            splineTo(Vector2d(51.0, 0.0), SIDE)
+                            addDisplacementMarker {
+                                bot.output.claw.state = Output.ClawState.CLOSED
+                                bot.output.arm.state = Output.ArmState.PARK
+                            }
+                            splineToSplineHeading(Pose2d(51.0, -24.0, -SIDE), -PI /2.0)
                         }
-                        splineToSplineHeading(Pose2d(51.0, -24.0, -SIDE), -PI /2.0)
-                    }
+                    else
+                        go(bot.drive, sideHigh, quickExit = true) {
+                            setReversed(true)
+                            splineTo(Vector2d(51.0, 0.0), SIDE)
+                            addDisplacementMarker {
+                                bot.output.claw.state = Output.ClawState.CLOSED
+                                bot.output.arm.state = Output.ArmState.PARK
+                            }
+                            splineToSplineHeading(Pose2d(51.0, -21.0, -SIDE), -PI /2.0)
+                        }
                 }
             }
             delay(1000.milliseconds)

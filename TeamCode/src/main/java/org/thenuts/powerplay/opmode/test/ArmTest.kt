@@ -18,9 +18,9 @@ class ArmTest : CommandLinearOpMode<October>(::October, Alliance.RED, Mode.TEST)
             bot.output.claw.state = Output.ClawState.NARROW
             while (true) {
                 bot.output.arm.state = Output.ArmState.PASSTHRU_OUTPUT
-                do yield() while (bot.output.arm.isBusy)
+                do yield() while (bot.output.profiledServo.isBusy)
                 bot.output.arm.state = Output.ArmState.SAMESIDE_OUTPUT
-                do yield() while (bot.output.arm.isBusy)
+                do yield() while (bot.output.profiledServo.isBusy)
             }
         }
         sched.addCommand(cmd)

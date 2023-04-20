@@ -50,8 +50,7 @@ abstract class AllNearHighAuto(right: Boolean): CyclingAuto(right) {
                 splineToConstantHeading(Vector2d(8.0, if (right) 28.0 else -28.0), (0.0))
                 addDisplacementMarker {
                     bot.output.arm.state = Output.ArmState.MAX_UP
-                    bot.output.lift.state =
-                        VerticalSlides.State.RunTo(VerticalSlides.Height.HIGH.pos)
+                    bot.output.lift.runTo(VerticalSlides.Height.HIGH.pos)
                 }
                 splineToConstantHeading(backupVec, 0.0)
                 setReversed(false)
@@ -74,7 +73,7 @@ abstract class AllNearHighAuto(right: Boolean): CyclingAuto(right) {
             task {
                 bot.output.arm.state = Output.ArmState.INTAKE
                 bot.output.claw.state = Output.ClawState.WIDE
-                bot.output.lift.state = VerticalSlides.State.RunTo(VerticalSlides.Height.FIVE.pos)
+                bot.output.lift.runTo(VerticalSlides.Height.FIVE.pos)
             }
             add(driveToIntake())
 

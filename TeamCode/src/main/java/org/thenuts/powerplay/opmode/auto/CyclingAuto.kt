@@ -68,7 +68,7 @@ abstract class CyclingAuto(val right: Boolean) : OctoberAuto() {
 
     fun singleCycle(height: Int, lastCone: Boolean, driveToOutput: () -> Command): Command = mkSequential {
         task { bot.output.claw.state = Output.ClawState.CLOSED }
-        delay(450.milliseconds)
+        delay(250.milliseconds)
 
         task { bot.output.lift.runTo(height) }
         if (!lastCone)
@@ -79,7 +79,7 @@ abstract class CyclingAuto(val right: Boolean) : OctoberAuto() {
         add(passthruOutput())
     }
 
-    fun passthruOutput(): Command = mkSequential {
+    fun passthruOutput(returnToIntake: Boolean = true): Command = mkSequential {
 //                task {
 //                    bot.output.lift.state =
 //                        VerticalSlides.State.RunTo(height)
@@ -99,7 +99,10 @@ abstract class CyclingAuto(val right: Boolean) : OctoberAuto() {
 //                delay(300.milliseconds)
 //                task { bot.output.claw.state = Output.ClawState.CLOSED }
         delay(200.milliseconds)
-        task { bot.output.arm.state = Output.ArmState.INTAKE }
+        if (returnToIntake)
+            task { bot.output.arm.state = Output.ArmState.INTAKE }
+        else
+            task { bot.output.arm.state = Output.ArmState.CLEAR }
         delay(300.milliseconds)
     }
 

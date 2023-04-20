@@ -8,7 +8,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 class StatefulServo<T: StatefulServo.ServoPosition>(val servo: Servo, initial: T, val speed: Double = 0.5) : HardwareOutput {
-    val isBusy get() = Duration.sinceJvmTime(Duration.ZERO) < deadline
+//    val isBusy get() = Duration.sinceJvmTime(Duration.ZERO) < deadline
 
     private var deadline = Duration.ZERO
 

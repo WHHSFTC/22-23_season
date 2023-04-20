@@ -31,6 +31,7 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
         CLEAR(0.55),
         SAMESIDE_HOVER(0.68), SAMESIDE_OUTPUT(0.84),
         MAX_UP(0.60),
+        PARK(0.45),
         HORIZONTAL(0.85);
 
         fun offset(): Double = cos((pos - HORIZONTAL.pos) * SERVO_RANGE) * ARM_LENGTH
@@ -42,7 +43,7 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
     }
 
     enum class ClawState(override val pos: Double) : StatefulServo.ServoPosition {
-        WIDE(0.88), NARROW(0.73), CLOSED(0.55), JUNCTION(0.74)
+        WIDE(0.88), NARROW(0.73), CLOSED(0.55), JUNCTION(0.74), INIT(1.0)
     }
 
     enum class LiftState {
