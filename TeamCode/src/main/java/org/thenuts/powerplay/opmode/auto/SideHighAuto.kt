@@ -16,9 +16,9 @@ import kotlin.time.Duration.Companion.milliseconds
 abstract class SideHighAuto(right: Boolean, val tape: Boolean): CyclingAuto(right) {
     override fun generateCommand(): Command {
         val startPose = Pose2d(0.0, 5.0, PI)
-        val intakePose = Pose2d(if (right) 47.5 else 51.0, if (right) -26.0 else 24.25, if (right) PI /2.0 else -PI /2.0)
-        val samesidePose = Pose2d(if (right) 50.0 else 49.0, if (right) 10.5 else -14.5, if (right) PI else PI)
-        val sideHigh = Pose2d(if (right) 55.0 else 56.0, if (right) 5.0 else -9.0, if (right) PI /4.0 else -PI /4.0)
+        val intakePose = Pose2d(if (right) 48.0 else 51.0, if (right) -26.0 else 23.75, if (right) PI /2.0 else -PI /2.0)
+        val samesidePose = Pose2d(if (right) 50.0 else 49.0, if (right) 12.5 else -13.5, if (right) PI else PI)
+        val sideHigh = Pose2d(if (right) 54.0 else 56.0, if (right) 4.0 else -8.0, if (right) PI /4.0 else -PI /4.0)
 
         fun driveToOutput(): Command =
             TrajectorySequenceCommand(bot.drive, intakePose, quickExit = true) {
@@ -67,22 +67,24 @@ abstract class SideHighAuto(right: Boolean, val tape: Boolean): CyclingAuto(righ
                     if (right)
                         go(bot.drive, sideHigh, quickExit = true) {
                             setReversed(true)
-                            splineTo(Vector2d(48.0, 0.0), SIDE)
+                            splineTo(Vector2d(48.0, -6.0), SIDE)
                             addDisplacementMarker {
                                 bot.output.claw.state = Output.ClawState.CLOSED
                                 bot.output.arm.state = Output.ArmState.PARK
                             }
-                            splineToSplineHeading(Pose2d(51.0, 24.0, -SIDE), PI /2.0)
+                            splineToSplineHeading(Pose2d(48.0, 20.0, -SIDE), PI/2.0)
                         }
                     else
                         go(bot.drive, sideHigh, quickExit = true) {
                             setReversed(true)
-                            splineTo(Vector2d(48.0, 0.0), SIDE)
+                            splineTo(Vector2d(49.0, 2.0), SIDE)
                             addDisplacementMarker {
                                 bot.output.claw.state = Output.ClawState.CLOSED
                                 bot.output.arm.state = Output.ArmState.PARK
                             }
-                            splineToSplineHeading(Pose2d(51.0, 24.0, -SIDE), PI /2.0)
+//                            splineToSplineHeading(Pose2d(49.0, 24.0, -SIDE), PI /2.0)
+                            splineTo(Vector2d(49.0, 24.0), PI /2.0)
+                            back(3.0)
                         }
                 }
                 value(Signal.MID) { // MID or null
@@ -96,22 +98,22 @@ abstract class SideHighAuto(right: Boolean, val tape: Boolean): CyclingAuto(righ
                     if (right)
                         go(bot.drive, sideHigh, quickExit = true) {
                             setReversed(true)
-                            splineTo(Vector2d(51.0, 0.0), SIDE)
+                            splineTo(Vector2d(49.0, -6.0), SIDE)
                             addDisplacementMarker {
                                 bot.output.claw.state = Output.ClawState.CLOSED
                                 bot.output.arm.state = Output.ArmState.PARK
                             }
-                            splineToSplineHeading(Pose2d(51.0, -24.0, -SIDE), -PI /2.0)
+                            splineToSplineHeading(Pose2d(49.0, -28.0, -SIDE), -PI /2.0)
                         }
                     else
                         go(bot.drive, sideHigh, quickExit = true) {
                             setReversed(true)
-                            splineTo(Vector2d(51.0, 0.0), SIDE)
+                            splineTo(Vector2d(48.0, 6.0), SIDE)
                             addDisplacementMarker {
                                 bot.output.claw.state = Output.ClawState.CLOSED
                                 bot.output.arm.state = Output.ArmState.PARK
                             }
-                            splineToSplineHeading(Pose2d(51.0, -21.0, -SIDE), -PI /2.0)
+                            splineToSplineHeading(Pose2d(48.0, -21.5, -SIDE), -PI/2.0)
                         }
                 }
             }

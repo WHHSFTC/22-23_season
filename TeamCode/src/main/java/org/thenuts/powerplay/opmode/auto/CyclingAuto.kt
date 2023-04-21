@@ -66,9 +66,9 @@ abstract class CyclingAuto(val right: Boolean) : OctoberAuto() {
 //                delay(200.milliseconds)
     }
 
-    fun singleCycle(height: Int, lastCone: Boolean, driveToOutput: () -> Command): Command = mkSequential {
+    fun singleCycle(height: Int, lastCone: Boolean, driveToOutput: () -> Command, last: Boolean): Command = mkSequential {
         task { bot.output.claw.state = Output.ClawState.CLOSED }
-        delay(250.milliseconds)
+        delay(300.milliseconds)
 
         task { bot.output.lift.runTo(height) }
         if (!lastCone)
@@ -76,10 +76,10 @@ abstract class CyclingAuto(val right: Boolean) : OctoberAuto() {
         task { bot.output.arm.state = Output.ArmState.CLEAR }
 
         add(driveToOutput())
-        add(passthruOutput())
+        add(passthruOutput(last))
     }
 
-    fun passthruOutput(returnToIntake: Boolean = true): Command = mkSequential {
+    fun passthruOutput(last: Boolean = false): Command = mkSequential {
 //                task {
 //                    bot.output.lift.state =
 //                        VerticalSlides.State.RunTo(height)
@@ -99,11 +99,11 @@ abstract class CyclingAuto(val right: Boolean) : OctoberAuto() {
 //                delay(300.milliseconds)
 //                task { bot.output.claw.state = Output.ClawState.CLOSED }
         delay(200.milliseconds)
-        if (returnToIntake)
-            task { bot.output.arm.state = Output.ArmState.INTAKE }
+        if (last)
+            task { bot.output.arm.state = Output.ArmState.SAMESIDE_HOVER }
         else
-            task { bot.output.arm.state = Output.ArmState.CLEAR }
-        delay(300.milliseconds)
+            task { bot.output.arm.state = Output.ArmState.INTAKE }
+        delay(250.milliseconds)
     }
 
     fun samesideToStack(samesidePose: Pose2d, intakePose: Pose2d, stackHeight: Int = 5): Command = mkSequential {
@@ -174,6 +174,7 @@ abstract class CyclingAuto(val right: Boolean) : OctoberAuto() {
                 var vy = correction.y
 
                 bot.log.out["suggested y correction"] = correction.y
+                bot.log.out["y position"] = bot.drive.poseEstimate.x
 
                 if (headingError.absoluteValue > HEADING_THRESHOLD) {
                     vx = 0.0
@@ -217,7 +218,7 @@ abstract class CyclingAuto(val right: Boolean) : OctoberAuto() {
                 add(junctions[i - 1].driveToIntake())
             }
 
-            add(singleCycle(junctions[i].height, stackHeight == 1, junctions[i].driveToOutput))
+            add(singleCycle(junctions[i].height, stackHeight == 1, junctions[i].driveToOutput, i != junctions.indices.last))
         }
     }
 

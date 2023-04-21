@@ -11,6 +11,7 @@ import org.thenuts.switchboard.dsl.mkSequential
 import org.thenuts.switchboard.util.Frame
 import java.lang.Integer.max
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
 
 @Config
 class Driver2(val gamepad: Gamepad, val bot: October, val outputSlot: SlotCommand) : Command {
@@ -229,6 +230,7 @@ class Driver2(val gamepad: Gamepad, val bot: October, val outputSlot: SlotComman
             outputSlot.interrupt(mkSequential {
                 if (bot.output.arm.state.pos < Output.ArmState.SAMESIDE_HOVER.pos) {
                     task { bot.output.claw.state = Output.ClawState.NARROW }
+                    delay(200.milliseconds)
                 }
                 task { bot.output.arm.state = Output.ArmState.INTAKE }
                 await { bot.output.linkedServos.position > Output.ArmState.SAMESIDE_HOVER.pos }

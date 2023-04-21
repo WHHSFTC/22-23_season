@@ -1,5 +1,7 @@
 package org.thenuts.powerplay.opmode.auto
 
+import com.acmerobotics.roadrunner.geometry.Pose2d
+import com.qualcomm.robotcore.hardware.DcMotor
 import org.thenuts.powerplay.game.Alliance
 import org.thenuts.powerplay.game.Mode
 import org.thenuts.powerplay.opmode.CommandLinearOpMode
@@ -34,6 +36,8 @@ abstract class OctoberAuto : CommandLinearOpMode<October>(::October, Alliance.RE
         bot.vision?.front?.stopDebug()
         bot.vision?.signal?.disable()
         GlobalState.poseEstimate = bot.drive.poseEstimate
+        bot.drive.setWeightedDrivePower(Pose2d())
+        bot.drive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE)
     }
 
     override fun initLoopHook() {

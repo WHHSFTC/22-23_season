@@ -18,7 +18,7 @@ abstract class AllNearHighAuto(right: Boolean): CyclingAuto(right) {
         val startPose = Pose2d(0.0, 5.0, PI)
         val backupVec = Vector2d(if (right) 50.0 else 50.0, if (right) 24.0 else -24.0)
         val nearHigh = Pose2d(if (right) 41.0 else 40.0, if (right) 33.0 else -30.0, if (right) 6.0*PI/8.0 else -6.0*PI/8.0)
-        val intakePose = Pose2d(if (right) 51.0 else 50.0, if (right) -21.5 else 24.25, if (right) PI /2.0 else -PI /2.0)
+        val intakePose = Pose2d(if (right) 57.0 else 50.0, if (right) -21.5 else 24.25, if (right) PI /2.0 else -PI /2.0)
         val intermediate = Pose2d(if (right) 50.0 else 50.0, if (right) 12.0 else -12.0, if (right) PI/2.0 else -PI/2.0)
 
         fun driveToOutput(): Command =

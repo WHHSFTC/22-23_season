@@ -43,7 +43,7 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
     }
 
     enum class ClawState(override val pos: Double) : StatefulServo.ServoPosition {
-        WIDE(0.88), NARROW(0.73), CLOSED(0.55), JUNCTION(0.74), INIT(1.0)
+        WIDE(0.88), NARROW(0.73), CLOSED(0.55), JUNCTION(0.74), INIT(0.93)
     }
 
     enum class LiftState {
@@ -163,7 +163,7 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
         }
 
     val lift = VerticalSlides(log, config)
-    val claw = StatefulServo(config.servos["claw_output"], ClawState.WIDE)
+    val claw = StatefulServo(config.servos["claw_output"], ClawState.INIT)
 
     val leftArm = config.servos["left_output"].also {
         ((it as? ServoImpl)?.s as? ServoImplEx)?.pwmRange =PwmControl.PwmRange(500.0,2500.0)
