@@ -20,6 +20,7 @@ import kotlin.math.PI
 import kotlin.math.absoluteValue
 import kotlin.math.min
 import kotlin.math.sign
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 @Config
@@ -139,7 +140,7 @@ abstract class CyclingAuto(val right: Boolean) : OctoberAuto() {
         val targetHeading = if (right) PI/2.0 else -PI/2.0
         linear {
             bot.tapeDetector.reset()
-            while (bot.tapeDetector.read() == TapeDetector.TapeState.MISSING) {
+            while (bot.drive.poseEstimate.x < 40.0 || bot.tapeDetector.read() == TapeDetector.TapeState.MISSING) {
                 if (!bot.drive.isBusy) return@linear
                 yield()
             }
@@ -199,7 +200,7 @@ abstract class CyclingAuto(val right: Boolean) : OctoberAuto() {
         }
     }
 
-    fun cycle(initialStackHeight: Int, junctions: List<Junction>): Command = mkSequential {
+    fun cycle(initialStackHeight: Int, junctions: List<Junction>, delayTime: Duration? = null): Command = mkSequential {
         for (i in junctions.indices) {
             val stackHeight = initialStackHeight - i
 
@@ -209,13 +210,28 @@ abstract class CyclingAuto(val right: Boolean) : OctoberAuto() {
 //                task { bot.output.arm.state = Output.ArmState.values()[stackHeight - 1] }
 
             if (i != 0) {
-                task {
-                    bot.output.arm.state = Output.ArmState.INTAKE
-                    bot.output.claw.state = Output.ClawState.WIDE
+                if (delayTime == null) {
+                    task {
+                        bot.output.arm.state = Output.ArmState.INTAKE
+                        bot.output.claw.state = Output.ClawState.WIDE
 //                    bot.output.lift.runTo(0)
-                    bot.output.lift.runTo(VerticalSlides.Height.values()[stackHeight - 1].pos)
+                        bot.output.lift.runTo(VerticalSlides.Height.values()[stackHeight - 1].pos)
+                    }
+                    add(junctions[i - 1].driveToIntake())
+                } else {
+                    par {
+                        add(junctions[i - 1].driveToIntake())
+                        seq {
+                            delay(delayTime)
+                            task {
+                                bot.output.arm.state = Output.ArmState.INTAKE
+                                bot.output.claw.state = Output.ClawState.WIDE
+//                    bot.output.lift.runTo(0)
+                                bot.output.lift.runTo(VerticalSlides.Height.values()[stackHeight - 1].pos)
+                            }
+                        }
+                    }
                 }
-                add(junctions[i - 1].driveToIntake())
             }
 
             add(singleCycle(junctions[i].height, stackHeight == 1, junctions[i].driveToOutput, i != junctions.indices.last))

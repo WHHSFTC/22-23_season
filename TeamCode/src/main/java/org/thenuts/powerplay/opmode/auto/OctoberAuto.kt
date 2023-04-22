@@ -10,12 +10,15 @@ import org.thenuts.powerplay.subsystems.localization.KalmanLocalizer
 import org.thenuts.powerplay.subsystems.October
 import org.thenuts.switchboard.command.Command
 import org.thenuts.switchboard.command.CommandScheduler
+import org.thenuts.switchboard.dsl.mkSequential
 import org.thenuts.switchboard.util.sinceJvmTime
 import kotlin.math.PI
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 abstract class OctoberAuto : CommandLinearOpMode<October>(::October, Alliance.RED, Mode.AUTO) {
     private lateinit var cmd: Command
+    var preAutoDelay = 0
 
     abstract fun generateCommand(): Command
 
@@ -41,6 +44,10 @@ abstract class OctoberAuto : CommandLinearOpMode<October>(::October, Alliance.RE
     }
 
     override fun initLoopHook() {
+        if (gamepad2.b) preAutoDelay++
+        if (gamepad2.a && preAutoDelay > 0) preAutoDelay--
+
+        log.out["_DELAY"] = preAutoDelay.toDouble() / 1000.0
         log.out["signal"] = bot.vision?.signal?.finalTarget
     }
 
@@ -49,7 +56,10 @@ abstract class OctoberAuto : CommandLinearOpMode<October>(::October, Alliance.RE
         bot.vision?.signal?.disable()
         bot.vision?.gamepad = null
         GlobalState.autoStartTime = Duration.sinceJvmTime()
-        sched.addCommand(cmd)
+        sched.addCommand(mkSequential {
+            delay(preAutoDelay.milliseconds)
+            add(cmd)
+        })
     }
 
     override fun loopHook() {

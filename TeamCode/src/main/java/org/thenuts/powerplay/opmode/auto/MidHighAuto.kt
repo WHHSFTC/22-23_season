@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous
 import org.thenuts.powerplay.game.Signal
 import org.thenuts.powerplay.opmode.commands.TrajectorySequenceCommand
 import org.thenuts.powerplay.opmode.commands.go
+import org.thenuts.powerplay.opmode.tele.toRadians
 import org.thenuts.powerplay.subsystems.output.Output
 import org.thenuts.powerplay.subsystems.output.VerticalSlides
 import org.thenuts.switchboard.command.Command
@@ -13,12 +14,12 @@ import org.thenuts.switchboard.dsl.mkSequential
 import kotlin.math.PI
 import kotlin.time.Duration.Companion.milliseconds
 
-abstract class SideHighAuto(right: Boolean, val tape: Boolean): CyclingAuto(right) {
+abstract class MidHighAuto(right: Boolean, val tape: Boolean): CyclingAuto(right) {
     override fun generateCommand(): Command {
         val startPose = Pose2d(0.0, 5.0, PI)
-        val intakePose = Pose2d(if (right) 47.5 else 51.0, if (right) -26.0 else 23.75, if (right) PI /2.0 else -PI /2.0)
-        val samesidePose = Pose2d(if (right) 50.0 else 49.0, if (right) 12.5 else -15.0, if (right) PI else PI)
-        val sideHigh = Pose2d(if (right) 55.0 else 56.0, if (right) 4.0 else -8.0, if (right) PI /4.0 else -PI /4.0)
+        val intakePose = Pose2d(if (right) 53.0 else 51.0, if (right) -22.0 else 23.75, if (right) PI /2.0 else -PI /2.0)
+        val samesidePose = Pose2d(if (right) 24.0 else 49.0, if (right) 12.0 else -15.0, if (right) PI else PI)
+        val sideHigh = Pose2d(if (right) 56.5 else 56.0, if (right) 10.5 else -8.0, if (right) PI /4.0 else -PI /4.0)
 
         fun driveToOutput(): Command =
             TrajectorySequenceCommand(bot.drive, intakePose, quickExit = true) {
@@ -37,16 +38,53 @@ abstract class SideHighAuto(right: Boolean, val tape: Boolean): CyclingAuto(righ
             Junction(VerticalSlides.Height.HIGH.pos, ::driveToOutput, ::driveToIntake),
             Junction(VerticalSlides.Height.HIGH.pos, ::driveToOutput, ::driveToIntake),
             Junction(VerticalSlides.Height.HIGH.pos, ::driveToOutput, ::driveToIntake),
-            Junction(VerticalSlides.Height.HIGH.pos, ::driveToOutput, ::driveToIntake),
+//            Junction(VerticalSlides.Height.HIGH.pos, ::driveToOutput, ::driveToIntake),
         )
 
         bot.drive.poseEstimate = startPose
 
         return mkSequential {
-            add(pushSignal(startPose, samesidePose, VerticalSlides.Height.HIGH.pos))
-            add(samesideOutput(VerticalSlides.Height.HIGH.pos))
+            task { bot.output.claw.state = Output.ClawState.CLOSED }
+
+            go(bot.drive, startPose, quickExit = true) {
+                setTangent(-PI / 4.0)
+                splineToConstantHeading(Vector2d(3.0, startPose.y / 2.0), (-PI / 4.0))
+                addDisplacementMarker {
+                    bot.output.arm.state = Output.ArmState.MAX_UP
+                }
+                splineToConstantHeading(Vector2d(8.0, 0.0), (0.0))
+                splineToConstantHeading(Vector2d(22.0, 2.0), PI/4.0)
+                addDisplacementMarker {
+                    bot.output.lift.runTo(VerticalSlides.Height.MID.pos)
+                }
+                splineToConstantHeading(samesidePose.vec(), (MIDDLE))
+            }
+
+            add(samesideOutput(VerticalSlides.Height.MID.pos))
             par {
-                add(wrapWithTape(intakePose, tape, samesideToStack(samesidePose, intakePose)))
+                add(wrapWithTape(intakePose, tape, mkSequential {
+                    go(bot.drive, samesidePose, quickExit = true) {
+//                        strafeTo(intakePose.vec())
+                        setTangent(MIDDLE)
+                        splineToConstantHeading(Vector2d(26.0, 24.0), (SIDE))
+                        splineToConstantHeading(Vector2d(40.0, 24.0), 0.0)
+                        addDisplacementMarker {
+                            bot.output.lift.runTo(VerticalSlides.Height.FIVE.pos)
+                        }
+//                        setTurnConstraint(4.0, 4.0)
+//                        turn((-90.0).toRadians())
+//                        resetTurnConstraint()
+                        addDisplacementMarker {
+                            bot.output.arm.state = Output.ArmState.INTAKE
+                            bot.output.claw.state = Output.ClawState.WIDE
+                        }
+//                        splineToSplineHeading(Pose2d(intakePose.x, 14.0, (MIDDLE)), (SIDE))
+                        setReversed(true)
+                        splineTo(Vector2d(50.0, 12.0), SIDE)
+                        splineTo(intakePose.vec(), SIDE)
+//                        splineToSplineHeading(intakePose, (SIDE))
+                    }
+                }))
                 seq {
                     delay(500.milliseconds)
                     task { bot.output.lift.runTo(VerticalSlides.Height.FIVE.pos) }
@@ -124,13 +162,13 @@ abstract class SideHighAuto(right: Boolean, val tape: Boolean): CyclingAuto(righ
 }
 
 @Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
-class LeftSideHigh: SideHighAuto(false, false)
+class LeftMidHigh: MidHighAuto(false, false)
 
 @Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
-class RightSideHigh: SideHighAuto(true, false)
+class RightMidHigh: MidHighAuto(true, false)
 
 @Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
-class LeftSideHighTape: SideHighAuto(false, true)
+class LeftMidHighTape: MidHighAuto(false, true)
 
 @Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
-class RightSideHighTape: SideHighAuto(true, true)
+class RightMidHighTape: MidHighAuto(true, true)
