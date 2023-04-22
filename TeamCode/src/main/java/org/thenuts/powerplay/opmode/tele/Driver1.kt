@@ -204,9 +204,9 @@ class Driver1(val gamepad: Gamepad, val bot: October, val outputSlot: SlotComman
                     val correct = TapeDetector.suggestedCorrection(bot.tapeDetector.read())
                     if (correct != null) {
                         if (correct.y == 0.0) {
-                            translation = Vector2d(pow, 0.0)
+                            translation = Vector2d(-pow, 0.0)
                         } else {
-                            translation = Vector2d(min(pow, correct.x), correct.y)
+                            translation = Vector2d(-min(pow, correct.x.absoluteValue), correct.y)
                         }
                     }
                 }

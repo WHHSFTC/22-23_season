@@ -18,7 +18,7 @@ abstract class MidHighAuto(right: Boolean, val tape: Boolean): CyclingAuto(right
     override fun generateCommand(): Command {
         val startPose = Pose2d(0.0, 5.0, PI)
         val intakePose = Pose2d(if (right) 53.0 else 51.0, if (right) -22.0 else 23.75, if (right) PI /2.0 else -PI /2.0)
-        val samesidePose = Pose2d(if (right) 24.0 else 49.0, if (right) 12.0 else -15.0, if (right) PI else PI)
+        val samesidePose = Pose2d(if (right) 26.0 else 49.0, if (right) 11.0 else -15.0, if (right) PI else PI)
         val sideHigh = Pose2d(if (right) 56.5 else 56.0, if (right) 10.5 else -8.0, if (right) PI /4.0 else -PI /4.0)
 
         fun driveToOutput(): Command =
@@ -66,8 +66,8 @@ abstract class MidHighAuto(right: Boolean, val tape: Boolean): CyclingAuto(right
                     go(bot.drive, samesidePose, quickExit = true) {
 //                        strafeTo(intakePose.vec())
                         setTangent(MIDDLE)
-                        splineToConstantHeading(Vector2d(26.0, 24.0), (SIDE))
-                        splineToConstantHeading(Vector2d(40.0, 24.0), 0.0)
+                        splineToConstantHeading(Vector2d(27.0, 23.0), (MIDDLE/2.0))
+                        splineToConstantHeading(Vector2d(40.0, 23.0), 0.0)
                         addDisplacementMarker {
                             bot.output.lift.runTo(VerticalSlides.Height.FIVE.pos)
                         }

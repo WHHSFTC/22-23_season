@@ -13,12 +13,12 @@ import org.thenuts.switchboard.dsl.mkSequential
 import kotlin.math.PI
 import kotlin.time.Duration.Companion.milliseconds
 
-abstract class SideHighAuto(right: Boolean, val tape: Boolean): CyclingAuto(right) {
+abstract class SideHighAuto(right: Boolean, val tape: Boolean, val n: Int): CyclingAuto(right) {
     override fun generateCommand(): Command {
         val startPose = Pose2d(0.0, 5.0, PI)
         val intakePose = Pose2d(if (right) 47.5 else 51.0, if (right) -26.0 else 23.75, if (right) PI /2.0 else -PI /2.0)
-        val samesidePose = Pose2d(if (right) 50.0 else 49.0, if (right) 12.5 else -15.0, if (right) PI else PI)
-        val sideHigh = Pose2d(if (right) 55.0 else 56.0, if (right) 4.0 else -8.0, if (right) PI /4.0 else -PI /4.0)
+        val samesidePose = Pose2d(if (right) 50.0 else 49.0, if (right) 12.0 else -15.0, if (right) PI else PI)
+        val sideHigh = Pose2d(if (right) 55.5 else 56.0, if (right) 4.5 else -8.0, if (right) PI /4.0 else -PI /4.0)
 
         fun driveToOutput(): Command =
             TrajectorySequenceCommand(bot.drive, intakePose, quickExit = true) {
@@ -53,8 +53,8 @@ abstract class SideHighAuto(right: Boolean, val tape: Boolean): CyclingAuto(righ
                 }
             }
 
-            if (tape) {
-                add(cycle(5, junctions.subList(0, 4)))
+            if (n < 5) {
+                add(cycle(5, junctions.subList(0, n)))
             } else {
                 add(cycle(5, junctions))
             }
@@ -124,13 +124,25 @@ abstract class SideHighAuto(right: Boolean, val tape: Boolean): CyclingAuto(righ
 }
 
 @Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
-class LeftSideHigh: SideHighAuto(false, false)
+class LeftSideHigh: SideHighAuto(false, false, 5)
 
 @Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
-class RightSideHigh: SideHighAuto(true, false)
+class RightSideHigh: SideHighAuto(true, false, 5)
 
 @Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
-class LeftSideHighTape: SideHighAuto(false, true)
+class LeftSideHigh4: SideHighAuto(false, false, 4)
 
 @Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
-class RightSideHighTape: SideHighAuto(true, true)
+class RightSideHigh4: SideHighAuto(true, false, 4)
+
+@Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
+class LeftSideHighTape: SideHighAuto(false, true, 4)
+
+@Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
+class RightSideHighTape: SideHighAuto(true, true, 4)
+
+@Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
+class LeftSideHighTape3: SideHighAuto(false, true, 3)
+
+@Autonomous(preselectTeleOp = "OctoberTele", group = "_official")
+class RightSideHighTape3: SideHighAuto(true, true, 3)

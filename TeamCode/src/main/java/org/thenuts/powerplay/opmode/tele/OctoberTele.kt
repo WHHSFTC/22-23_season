@@ -14,6 +14,7 @@ import org.thenuts.switchboard.command.combinator.SlotCommand
 import org.thenuts.switchboard.util.sinceJvmTime
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
 
 @TeleOp
 @Config
@@ -23,6 +24,7 @@ class OctoberTele : CommandLinearOpMode<October>(::October, Alliance.RED, Mode.T
     override fun postInitHook() {
         bot.output.claw.state = Output.ClawState.CLOSED
         bot.output.arm.state = Output.ArmState.CLEAR
+        log.out["@auto duration"] = (GlobalState.autoStopTime - GlobalState.autoStartTime).toDouble(DurationUnit.SECONDS)
     }
 
     override fun postStartHook() {

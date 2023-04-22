@@ -39,15 +39,16 @@ abstract class OctoberAuto : CommandLinearOpMode<October>(::October, Alliance.RE
         bot.vision?.front?.stopDebug()
         bot.vision?.signal?.disable()
         GlobalState.poseEstimate = bot.drive.poseEstimate
+        GlobalState.autoStopTime = Duration.sinceJvmTime()
         bot.drive.setWeightedDrivePower(Pose2d())
         bot.drive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE)
     }
 
     override fun initLoopHook() {
-        if (gamepad2.b) preAutoDelay++
-        if (gamepad2.a && preAutoDelay > 0) preAutoDelay--
+        if (gamepad2.b) preAutoDelay += 10
+        if (gamepad2.a && preAutoDelay > 0) preAutoDelay -= 10
 
-        log.out["_DELAY"] = preAutoDelay.toDouble() / 1000.0
+        log.out["@DELAY"] = preAutoDelay.toDouble() / 1000.0
         log.out["signal"] = bot.vision?.signal?.finalTarget
     }
 
