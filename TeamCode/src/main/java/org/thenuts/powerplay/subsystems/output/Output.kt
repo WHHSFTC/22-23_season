@@ -43,7 +43,7 @@ class Output(val log: Logger, config: Configuration) : Subsystem {
     }
 
     enum class ClawState(override val pos: Double) : StatefulServo.ServoPosition {
-        WIDE(0.88), NARROW(0.73), CLOSED(0.55), JUNCTION(0.74), INIT(0.93)
+        WIDE(0.97), NARROW(0.82), CLOSED(0.64), JUNCTION(0.83), INIT(1.0)
     }
 
     enum class LiftState {
