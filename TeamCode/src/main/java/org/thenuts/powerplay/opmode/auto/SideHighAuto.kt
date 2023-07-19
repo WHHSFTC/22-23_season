@@ -106,14 +106,14 @@ abstract class SideHighAuto(right: Boolean, val tape: Boolean, val n: Int): Cycl
                             splineToSplineHeading(Pose2d(49.0, -28.0, -SIDE), -PI /2.0)
                         }
                     else
-                        go(bot.drive, sideHigh, quickExit = true) {
+                        go(bot.drive, sideHigh) {
                             setReversed(true)
                             splineTo(Vector2d(48.0, 6.0), SIDE)
                             addDisplacementMarker {
                                 bot.output.claw.state = Output.ClawState.CLOSED
                                 bot.output.arm.state = Output.ArmState.PARK
                             }
-                            splineToSplineHeading(Pose2d(48.0, -21.5, -SIDE), -PI/2.0)
+                            splineToSplineHeading(Pose2d(44.0, -21.5, -SIDE), -PI/2.0)
                         }
                 }
             }
