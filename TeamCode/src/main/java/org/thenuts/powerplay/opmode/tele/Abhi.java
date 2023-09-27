@@ -18,23 +18,37 @@ public class Abhi extends OpMode{
         lf = hardwareMap.get(DcMotor.class, "motorLF");
         rb = hardwareMap.get(DcMotor.class, "motorRB");
         lb = hardwareMap.get(DcMotor.class, "motorLB");
+
+//        rf.setDirection(DcMotorSimple.Direction.REVERSE);
+//        rb.setDirection(DcMotorSimple.Direction.REVERSE);
+//        lb.setDirection(DcMotorSimple.Direction.REVERSE);
+//        lf.setDirection(DcMotorSimple.Direction.REVERSE);
     }
 
+    @Override
     public void loop(){
-       double y = 0; //vertical
-       double x = 0; //horizontal
-       double r = 0; //pivot/rotation
+     
+        double y = -gamepad1.left_stick_x; //vertical
+        double x = -gamepad1.left_stick_y; //horizontal
+        double r = -gamepad1.right_stick_x; //pivot and rotation
 
-        y = -gamepad1.left_stick_x;
-        x = -gamepad1.left_stick_y;
-        r = -gamepad1.right_stick_x;
+        boolean turtle = false;
+        if(gamepad1.left_trigger > 0.5 || gamepad1.right_trigger > 0.5){
+            turtle = true;
+        }
 
-        double preRF = (r+(y+x));
-        double preLF = (r+(y-x));
-        double preRB = (r+(-y+x));
-        double preLB = (r+(-y-x));
+        double scalar;
+        if(turtle){
+            scalar = 0.25;
+        }else{
+            scalar = 1.0
+        }
+        double preRF = (r+(y+x))*scalar;
+        double preLF = (r+(y-x))*scalar;
+        double preRB = (r+(-y+x))*scalar;
+        double preLB = (r+(-y-x))*scalar;
 
-        double max = Math.max(Math.max(Math.max(Math.max(preRF,preRB), preLF), preLB), 1);
+        double max = Math.max(Math.max(Math.max(Math.max(preRF,preRB), preLB), preLF), 1);
 
         rf.setPower(preRF/max);
         lf.setPower(preLF/max);
@@ -53,6 +67,7 @@ public class Abhi extends OpMode{
         telemetry.update();
     }
 
+    @Override
     public void stop(){
         super.stop();
         rf.setPower(0);
